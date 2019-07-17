@@ -1,0 +1,51 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{graphicx}
+\graphicspath{{./img/}}
+\usepackage{pgf}
+\usepackage{subfig}
+
+\usepackage{pythontex}
+\setpythontexcontext{textwidth=\the\textwidth}
+\begin{pythontexcustomcode}[begin]{py}
+FIGURES_DIR = 'figures'
+DATA_DIR = 'data'
+SCRIPTS_DIR = 'scripts'
+
+import sys
+sys.path.append(SCRIPTS_DIR)
+
+pytex.add_dependencies('python_figures.py')
+with pytex.open('python_figures.py', 'rb') as file:
+    exec(compile(file.read(), filename='python_figures.py', mode='exec'), globals())
+\end{pythontexcustomcode}
+
+\begin{document}
+	\title{Latex Python figure example}
+	\author{Matthew Edwards}
+	\date{July 2019}
+	\maketitle
+
+	Test: \py{1 + 1}. Text width: \py{pytex.context.textwidth}
+
+	\begin{figure}
+		\py{python_fig('test.py')}
+		\caption{Test figure.}
+		\label{fig:test}
+	\end{figure}
+
+	\begin{figure}
+		\centering
+		\subfloat[Test figure.]{%
+			\py{python_fig('test.py', width=0.45*textwidth())}
+		}
+		\subfloat[Test figure.]{%
+			\py{python_fig('test.py', width=0.45*textwidth())}
+		}
+		\caption{Side-by-side Python figures.}
+		\label{fig:test2}
+	\end{figure}
+
+	TODO: PythonTeX doesn't re-run when python files change.
+\end{document}
