@@ -1,4 +1,4 @@
-.PHONY: pdf continuous clean extraclean
+.PHONY: pdf continuous clean
 
 pdf:
 	latexmk -interaction=nonstopmode example.tex
@@ -8,6 +8,3 @@ continuous:
 
 clean:
 	latexmk -c
-
-extraclean: clean
-	-rm -rf figures/

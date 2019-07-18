@@ -1,3 +1,8 @@
+"""PythonTeX figure helpers.
+
+Author: Matthew Edwards
+Date: July 2019
+"""
 import math
 import os
 import os.path
@@ -71,10 +76,12 @@ def python_fig(script, *args, width=None, aspect=SQUARE, **kwargs):
     figsize = (width, width/aspect)
     plt.figure(figsize=figsize)
 
+    # TODO: Figure out a way of doing this with imports instead
     main = load_script(script)
     name = main(*args, **kwargs)
+    # TODO: Is this a sensible way to define the filename?
     assert name is not None
-    name += '-%sx%s' % figsize
+    name += '-%.2fx%.2f' % figsize
 
     if not os.path.isdir(FIGURES_DIR):
         os.mkdir(FIGURES_DIR)
