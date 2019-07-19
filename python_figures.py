@@ -174,7 +174,10 @@ def _render_figure(figure_func, width, aspect, format_='pgf'):
     figsize = (width, width/aspect)
     plt.figure(figsize=figsize)
 
-    name = figure_func()
+    # Run figure function, then reset mpl.rcParams
+    with mpl.rc_context():
+        name = figure_func()
+    # Generate name for figure
     # TODO: Is this a sensible way to define the filename?
     assert name is not None
     name += '-%.2fx%.2f' % figsize
