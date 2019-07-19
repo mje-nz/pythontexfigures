@@ -9,3 +9,4 @@ pythontex-files-*/
 
 **/*.pyc
 *.egg-info/
+/dist/
