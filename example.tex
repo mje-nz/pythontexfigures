@@ -4,6 +4,14 @@
 \usepackage{pgf}
 \usepackage{subfig}
 
+% Make build reproducible
+% https://tex.stackexchange.com/a/5961
+% https://tex.stackexchange.com/a/313605
+\pdfinfo{ /Producer (pdfTeX) }
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\pdfsuppressptexinfo=-1
+
 \usepackage[gobble=auto,keeptemps=all]{pythontex}
 
 % Pass font size, text width, and PythonTeX output dir into scripts
