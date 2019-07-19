@@ -23,4 +23,5 @@ you can insert it into a LaTeX document like this:
 By default, the figure size defaults to `\textwidth` square and the font and font size match the rest of the document.
 
 Tested with Python 3.7, matplotlib 3.0.3, PythonTeX 0.16, and latexmk 4.63b.
-Inspired by [TheChymera/RepSeP](https://github.com/TheChymera/RepSeP) but much simpler.
+Note that PythonTeX 0.16 is quite outdated; `example.tex` includes a patch for one issue which is fixed upstream but not yet released.
+Inspired by [TheChymera/RepSeP](https://github.com/TheChymera/RepSeP) (but much simpler) and [this blog post by Bennett Kanuka](http://bkanuka.com/posts/native-latex-plots/) (but more automated).

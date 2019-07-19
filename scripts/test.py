@@ -4,12 +4,17 @@ Author: Matthew Edwards
 Date: July 2019
 """
 
+
 def main():
-    x = np.arange(10)
+    x = np.linspace(0, 10, 100)
     y = x**2
-    plt.plot(x, y)
+    plt.plot(x, y, label='$x^2$')
     plt.xlabel('$x$')
-    plt.ylabel('$x^2$')
+    plt.ylabel('$y$')
+    plt.legend()
     return 'test'  # Figure filename
 
-# TODO: Wrapper for running from the command line
+
+if __name__ == '__main__':
+    import python_figures as pf
+    pf.run_standalone(main)

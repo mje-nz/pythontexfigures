@@ -1,22 +1,59 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 
-\usepackage{graphicx}
-\graphicspath{{./img/}}
 \usepackage{pgf}
 \usepackage{subfig}
 
-\usepackage{pythontex}
-\setpythontexcontext{textwidth=\the\textwidth}
-\begin{pythontexcustomcode}[begin]{py}
-FIGURES_DIR = 'figures'
-DATA_DIR = 'data'
-SCRIPTS_DIR = 'scripts'
+\usepackage[gobble=auto,keeptemps=all]{pythontex}
 
-with pytex.open('python_figures.py', 'rb') as file:
-    exec(compile(file.read(), filename='python_figures.py', mode='exec'), globals())
+% Pass font size and text width into scripts
+% https://tex.stackexchange.com/a/409993
+\makeatletter
+\newcommand*\fsize{\dimexpr\f@size pt\relax}
+\makeatother
+\setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth}
+
+% Pass context into customcode environment
+% https://github.com/gpoore/pythontex/issues/65
+\makeatletter
+\renewenvironment{pythontexcustomcode}[2][begin]{%
+    \VerbatimEnvironment
+    \Depythontex{env:pythontexcustomcode:om:n}%
+    %! Suppress = NonMatchingIf
+    \ifstrequal{#1}{begin}{}{%
+        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+            {Invalid optional argument for pythontexcustomcode}{}
+        }%
+    }%
+    \xdef\pytx@type{CC:#2:#1}%
+    \edef\pytx@cmd{code}%
+    % PATCH \def\pytx@context{}%
+    \pytx@SetContext
+    % END PATCH
+    \def\pytx@group{none}%
+    \pytx@BeginCodeEnv[none]}%
+{\end{VerbatimOut}%
+    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+    \stepcounter{\pytx@counter}%
+}%
+\makeatother
+
+% Shorthand for inserting figures from Python scripts
+\newcommand{\pyfig}[1]{\py{pf.figure(#1)}}
+
+
+\begin{pythontexcustomcode}[begin]{py}
+	# Set up python_figures first so it can configure matplotlib
+	import python_figures as pf
+	pf.setup(pytex)
+
+	# Set up environment for scripts
+	import numpy as np
+	import matplotlib.pyplot as plt
+	import seaborn as sns
+	sns.set_style('white')
 \end{pythontexcustomcode}
-\newcommand{\pyfig}[1]{\py{python_fig(#1)}}
+
 
 \begin{document}
 	\title{Latex Python figure examples}
@@ -33,10 +70,10 @@ with pytex.open('python_figures.py', 'rb') as file:
 	\begin{figure}
 		\centering
 		\subfloat[Test figure (golden aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*textwidth(), aspect=GOLDEN}
+			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH, aspect=pf.GOLDEN}
 		}
 		\subfloat[Test figure (square aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*textwidth()}
+			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH}
 		}
 		\caption{Side-by-side Python figures.}
 		\label{fig:test2}

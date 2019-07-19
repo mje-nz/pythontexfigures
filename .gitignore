@@ -1,8 +1,12 @@
+.idea
+
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
 *.pytxcode
 **/*.pyc
+
 figures/
 pythontex-files-*/
+
