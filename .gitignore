@@ -5,8 +5,7 @@
 *.fls
 *.log
 *.pytxcode
-**/*.pyc
-
-figures/
 pythontex-files-*/
 
+**/*.pyc
+*.egg-info/

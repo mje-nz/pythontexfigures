@@ -16,5 +16,5 @@ def main():
 
 
 if __name__ == '__main__':
-    import python_figures as pf
+    import pythontexfigures as pf
     pf.run_standalone(main)

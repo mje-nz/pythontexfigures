@@ -32,8 +32,6 @@ sub mypythontex {
         rdb_ensure_file($rule, $file);
         #print "Depending on $file\n";
     }
-    # TEMP: Run this rule when python_figures.py is modified
-    rdb_ensure_file($rule, 'python_figures.py');
 
     # The latexmk PythonTeX example rcfile at 
     # http://mirror.aut.ac.nz/CTAN/support/latexmk/example_rcfiles/pythontex-latexmkrc
