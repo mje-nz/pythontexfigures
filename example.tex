@@ -6,12 +6,14 @@
 
 \usepackage[gobble=auto,keeptemps=all]{pythontex}
 
-% Pass font size and text width into scripts
+% Pass font size, text width, and PythonTeX output dir into scripts
 % https://tex.stackexchange.com/a/409993
 \makeatletter
 \newcommand*\fsize{\dimexpr\f@size pt\relax}
+\newcommand*\pytxoutputdir{\pytx@outputdir}
 \makeatother
-\setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth}
+
+\setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth,outputdir=\pytxoutputdir}
 
 % Pass context into customcode environment
 % https://github.com/gpoore/pythontex/issues/65
@@ -39,7 +41,7 @@
 \makeatother
 
 % Shorthand for inserting figures from Python scripts
-\newcommand{\pyfig}[1]{\py{pf.figure(#1)}}
+\newcommand*{\pyfig}[1]{\py{pf.figure(#1)}}
 
 
 \begin{pythontexcustomcode}[begin]{py}

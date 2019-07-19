@@ -26,13 +26,12 @@ DATA_DIR = None
 FIGURES_DIR = None
 
 
-def _setup_paths(scripts_dir=None, data_dir=None, figures_dir=None):
+def _setup_paths(scripts_dir=None, data_dir=None):
     """Parse latexmkrc for path definitions, optionally overriding with arguments.
 
     Args:
         scripts_dir (str): Directory containing figure scripts (overrides latexmkrc)
         data_dir (str): Directory containing figure data files (overrides latexmkrc)
-        figures_dir (str): Directory in which to save generated figures (overrides latexmkrc)
     """
     global SCRIPTS_DIR, DATA_DIR, FIGURES_DIR
 
@@ -49,8 +48,6 @@ def _setup_paths(scripts_dir=None, data_dir=None, figures_dir=None):
                         SCRIPTS_DIR = dir_name
                     elif dir_type == 'data':
                         DATA_DIR = dir_name
-                    elif dir_type == 'figures':
-                        FIGURES_DIR = dir_name
                     else:
                         print("Warning: unrecognised PythonTeX folder in latexmkrc (%s)" % line)
 
@@ -59,11 +56,17 @@ def _setup_paths(scripts_dir=None, data_dir=None, figures_dir=None):
         SCRIPTS_DIR = scripts_dir
     if data_dir is not None:
         DATA_DIR = data_dir
-    if figures_dir is not None:
-        FIGURES_DIR = figures_dir
 
-    # TODO: Error if undefined?
-    # TODO: Put generated figures in pytex output directory?
+    try:
+        # Put figures in PythonTeX output directory
+        FIGURES_DIR = pytex.context.outputdir
+    except AttributeError:
+        # In standalone mode, put figures in working directory
+        FIGURES_DIR = "."
+
+    assert SCRIPTS_DIR is not None, "No scripts directory defined"
+    assert DATA_DIR is not None, "No data directory defined"
+    assert FIGURES_DIR is not None, "No data directory defined"
 
 
 def _setup_matplotlib(font_size=None):
@@ -112,7 +115,7 @@ def _setup_matplotlib(font_size=None):
     })
 
 
-def setup(pytex_, *, scripts_dir=None, data_dir=None, figures_dir=None):
+def setup(pytex_, *, scripts_dir=None, data_dir=None):
     """Set up module (call before importing pyplot!)
 
     TODO
@@ -124,7 +127,6 @@ def setup(pytex_, *, scripts_dir=None, data_dir=None, figures_dir=None):
         pytex_ (module): The global PythonTeXUtils instance
         scripts_dir (str): Directory containing figure scripts (overrides latexmkrc)
         data_dir (str): Directory containing figure data files (overrides latexmkrc)
-        figures_dir (str): Directory in which to save generated figures (overrides latexmkrc)
     """
     global pytex, FONT_SIZE, TEXT_WIDTH
 
@@ -139,7 +141,7 @@ def setup(pytex_, *, scripts_dir=None, data_dir=None, figures_dir=None):
     FONT_SIZE = float(pytex.context.fontsize[:-2])
     TEXT_WIDTH = pytex.pt_to_in(pytex.context.textwidth)
 
-    _setup_paths(scripts_dir, data_dir, figures_dir)
+    _setup_paths(scripts_dir, data_dir)
     _setup_matplotlib()
 
 
@@ -182,8 +184,7 @@ def _render_figure(figure_func, width, aspect, format_='pgf'):
     assert name is not None
     name += '-%.2fx%.2f' % figsize
 
-    if not os.path.isdir(FIGURES_DIR):
-        os.mkdir(FIGURES_DIR)
+    assert os.path.isdir(FIGURES_DIR), "Figures dir does not exist"
     figure_filename = os.path.join(FIGURES_DIR, name + '.' + format_)
     plt.savefig(figure_filename, bbox_inches='tight')
     return figure_filename
