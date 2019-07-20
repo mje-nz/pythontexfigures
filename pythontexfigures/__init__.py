@@ -14,6 +14,8 @@ from typing import Callable, Optional
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+from .sty import sty_file_as_string
+
 
 SQUARE = 1
 GOLDEN = (1.0 + math.sqrt(5.0))/2.0
@@ -146,6 +148,17 @@ def setup(pytex_, *, scripts_dir=None, data_dir=None):
 
     _setup_paths(scripts_dir, data_dir)
     _setup_matplotlib()
+
+
+def print_preamble():
+    r"""Print the contents of pythontexfigures.sty formatted to go in the preamble.
+    
+    If you don't have pythontexfigures.sty in your TeX tree, you can fudge it by
+    calling this in your preamble and following with \printpythontex.
+    """
+    print(r'\makeatletter')
+    print(sty_file_as_string().splitlines()[2:])
+    print(r'\makeatother')
 
 
 def _load_script(script_name):

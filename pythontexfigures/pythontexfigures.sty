@@ -1,0 +1,35 @@
+\ProvidesPackage{pythontexfigures}
+
+% Pass font size, text width, and PythonTeX output dir into scripts
+% https://tex.stackexchange.com/a/409993
+\newcommand*\fsize{\dimexpr\f@size pt\relax}
+\setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth,outputdir=\pytx@outputdir}
+
+% Until there's a new (> 0.16) release of PythonTeX, patch issue #65
+% https://github.com/gpoore/pythontex/issues/65
+\@ifpackagelater{pythontex}{2019/07/20}{}{%
+    % Pass context into customcode environment
+    \renewenvironment{pythontexcustomcode}[2][begin]{%
+        \VerbatimEnvironment
+        \Depythontex{env:pythontexcustomcode:om:n}%
+        %! Suppress = NonMatchingIf
+        \ifstrequal{#1}{begin}{}{%
+            \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+                {Invalid optional argument for pythontexcustomcode}{}
+            }%
+        }%
+        \xdef\pytx@type{CC:#2:#1}%
+        \edef\pytx@cmd{code}%
+        % PATCH \def\pytx@context{}%
+        \pytx@SetContext
+        % END PATCH
+        \def\pytx@group{none}%
+        \pytx@BeginCodeEnv[none]}%
+    {\end{VerbatimOut}%
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
+    }
+}
+
+% Shorthand for inserting figures from Python scripts
+\newcommand*{\pyfig}[1]{\py{pf.figure(#1)}}

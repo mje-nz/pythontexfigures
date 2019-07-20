@@ -7,5 +7,10 @@ setup(name='pythontexfigures',
       author='Matthew Edwards',
       author_email='mje-nz@users.noreply.github.com',
       license='BSD 3-Clause',
-      py_modules=['pythontexfigures'],
+      packages=['pythontexfigures'],
+      python_requires='>=3.5',
+      install_requires=[
+            'matplotlib',
+            'pygments'  # for pythontex
+      ],
       zip_safe=False)

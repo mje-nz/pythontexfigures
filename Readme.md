@@ -22,6 +22,32 @@ you can insert it into a LaTeX document like this:
 
 By default, the figure size defaults to `\textwidth` square and the font and font size match the rest of the document.
 
+
+
+## Installation
+Requires a LaTeX installation (probably TeX Live 2019), PythonTeX, and Python 3.5 or greater.
+Examples require latexmk.
+
+To install the Python package:
+```bash
+pip3 install -e .
+```
+
+To install the LaTeX package into `texmf-local`:
+```bash
+sudo python3 -m pythontexfigures.install TEXMFLOCAL
+# or for development
+PF_DIR=$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex/pythontexfigures
+mkdir -p PF_DIR
+ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
+sudo mktexlsr
+```
+
+Alternatively, call `pf.print_preamble()` in your pythontexcustomcode and follow with `\printpythontex`.
+
+
+## Misc
+
 Wishlist:
 
 * Better Readme
