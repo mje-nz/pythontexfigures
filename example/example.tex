@@ -23,29 +23,32 @@
 
 \setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth,outputdir=\pytxoutputdir}
 
-% Pass context into customcode environment
+% Until there's a new (> 0.16) release of PythonTeX, patch issue #65
 % https://github.com/gpoore/pythontex/issues/65
 \makeatletter
-\renewenvironment{pythontexcustomcode}[2][begin]{%
-    \VerbatimEnvironment
-    \Depythontex{env:pythontexcustomcode:om:n}%
-    %! Suppress = NonMatchingIf
-    \ifstrequal{#1}{begin}{}{%
-        \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
-            {Invalid optional argument for pythontexcustomcode}{}
+\@ifpackagelater{pythontex}{2019/07/20}{}{%
+    % Pass context into customcode environment
+    \renewenvironment{pythontexcustomcode}[2][begin]{%
+        \VerbatimEnvironment
+        \Depythontex{env:pythontexcustomcode:om:n}%
+        %! Suppress = NonMatchingIf
+        \ifstrequal{#1}{begin}{}{%
+            \ifstrequal{#1}{end}{}{\PackageError{\pytx@packagename}%
+                {Invalid optional argument for pythontexcustomcode}{}
+            }%
         }%
-    }%
-    \xdef\pytx@type{CC:#2:#1}%
-    \edef\pytx@cmd{code}%
-    % PATCH \def\pytx@context{}%
-    \pytx@SetContext
-    % END PATCH
-    \def\pytx@group{none}%
-    \pytx@BeginCodeEnv[none]}%
-{\end{VerbatimOut}%
-    \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
-    \stepcounter{\pytx@counter}%
-}%
+        \xdef\pytx@type{CC:#2:#1}%
+        \edef\pytx@cmd{code}%
+        % PATCH \def\pytx@context{}%
+        \pytx@SetContext
+        % END PATCH
+        \def\pytx@group{none}%
+        \pytx@BeginCodeEnv[none]}%
+    {\end{VerbatimOut}%
+        \setcounter{FancyVerbLine}{\value{pytx@FancyVerbLineTemp}}%
+        \stepcounter{\pytx@counter}%
+    }
+}
 \makeatother
 
 % Shorthand for inserting figures from Python scripts
