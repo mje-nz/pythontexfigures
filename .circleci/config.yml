@@ -1,0 +1,16 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: mjenz/texlive:bionic-vanilla
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip3 install -e .
+            python3 -m pythontexfigures.install TEXMFLOCAL
+      - run:
+          command: |
+            pip3 install pytest
+            pytest
