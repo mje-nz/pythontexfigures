@@ -12,6 +12,9 @@ import textwrap
 from typing import Callable, Optional
 
 import matplotlib as mpl
+# When generating PDF figures, use PGF backend so it looks the same as it will when
+# called from LaTeX
+mpl.use('pgf')
 import matplotlib.pyplot as plt
 
 from .sty import sty_file_as_string
@@ -79,15 +82,13 @@ def _setup_matplotlib(font_size=None):
         font_size (float): Override base font size (in pt), defaults to document's font
             size (or matplotlib default in standalone mode).
     """
-    # When generating PDF figures, use PGF backend so it looks the same as it will when
-    # called from LaTeX
-    mpl.use('pgf')
+    # Set up PGF backend
     mpl.rcParams.update({
-        # Use pdflatex instead of xelatex in PGF backend
+        # Use pdflatex instead of xelatex
         "pgf.texsystem": "pdflatex",
         # Use LaTeX instead of mathtext for all text rendering
         "text.usetex": True,
-        # Fix input and font encoding for PGF backend
+        # Fix input and font encoding
         "pgf.preamble": [
             r"\usepackage[utf8x]{inputenc}",
             r"\usepackage[T1]{fontenc}"
