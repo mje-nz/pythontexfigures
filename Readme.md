@@ -57,6 +57,6 @@ Wishlist:
 * Tables
 * One session per figure
 
-Tested with Python 3.7, matplotlib 3.0.3, PythonTeX 0.16, and latexmk 4.63b.
+Tested with PythonTeX 0.16, and latexmk 4.63b.
 Note that PythonTeX 0.16 is quite outdated; `example.tex` includes a patch for one issue which is fixed upstream but not yet released.
 Inspired by [TheChymera/RepSeP](https://github.com/TheChymera/RepSeP) (but much simpler) and [this blog post by Bennett Kanuka](http://bkanuka.com/posts/native-latex-plots/) (but more automated).
