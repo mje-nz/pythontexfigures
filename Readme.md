@@ -25,25 +25,39 @@ By default, the figure size defaults to `\textwidth` square and the font and fon
 
 
 ## Installation
-Requires a LaTeX installation (probably TeX Live 2019), PythonTeX, and Python 3.5 or greater.
+Requires a LaTeX installation (probably TeX Live 2019), PythonTeX, and Python 3.6 or greater.
 Examples require latexmk.
 
 To install the Python package:
 ```bash
-pip3 install -e .
+pip3 install pythontexfigures
 ```
 
 To install the LaTeX package into `texmf-local`:
 ```bash
-sudo python3 -m pythontexfigures.install TEXMFLOCAL
-# or for development
+sudo python3 -m pythontexfigures.install
+```
+If you don't have root access, you can install it into `texmf-home` instead:
+```bash
+sudo python3 -m pythontexfigures.install TEXMFHOME
+```
+
+Alternatively, call `pf.print_preamble()` in your pythontexcustomcode and follow with `\printpythontex`.
+
+
+## Development
+To install the Python package in editable:
+```bash
+pip3 install -e .
+```
+
+To link the LaTeX package into `texmf-local`:
+```bash
 PF_DIR=$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex/pythontexfigures
 mkdir -p PF_DIR
 ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
 sudo mktexlsr
 ```
-
-Alternatively, call `pf.print_preamble()` in your pythontexcustomcode and follow with `\printpythontex`.
 
 
 ## Misc
@@ -51,12 +65,11 @@ Alternatively, call `pf.print_preamble()` in your pythontexcustomcode and follow
 Wishlist:
 
 * Better Readme
-* Tests
-* CI
+* More tests
 * Inline figures
 * Tables
 * One session per figure
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.
-Note that PythonTeX 0.16 is quite outdated; `example.tex` includes a patch for one issue which is fixed upstream but not yet released.
+Note that PythonTeX 0.16 is quite outdated; a patch is included for one issue which is fixed upstream but not yet released.
 Inspired by [TheChymera/RepSeP](https://github.com/TheChymera/RepSeP) (but much simpler) and [this blog post by Bennett Kanuka](http://bkanuka.com/posts/native-latex-plots/) (but more automated).
