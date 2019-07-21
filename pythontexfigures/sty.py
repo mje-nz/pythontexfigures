@@ -1,4 +1,4 @@
-"""Wrapper for getting pythontexfigures.sty out of an egg.
+"""Wrapper for reading pythontexfigures.sty from wherever it gets packaged.
 
 Author: Matthew Edwards
 Date: July 2019
