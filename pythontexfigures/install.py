@@ -11,19 +11,23 @@ import sys
 from .sty import sty_file_as_string
 
 
-def install(tree):
-    exit_code, texmf_path = subprocess.getstatusoutput('kpsewhich -var-value=' + tree)
-    if exit_code != 0:
-        raise ValueError('Could not get path for ' + tree)
+def install(tree='TEXMFLOCAL'):
+    texmf_path = subprocess.check_output(['kpsewhich', '-var-value=' + tree])
+    texmf_path = texmf_path.decode('utf8').strip()
     path = Path(texmf_path)/'tex'/'latex'/'pythontexfigures'
-    path.mkdir(parents=True)
+    path.mkdir(parents=True, exist_ok=True)
     print('Installing pythontexfigures.sty into', path)
     (path/'pythontexfigures.sty').open('w').write(sty_file_as_string())
+    subprocess.check_call('mktexlsr')
 
 
 if __name__ == '__main__':
+    # TODO: Not lazy
     try:
-        install(sys.argv[1])
+        if len(sys.argv) > 1:
+            install(sys.argv[1])
+        else:
+            install()
     except Exception as e:
         print(e)
         print('Usage: python3 -m pythontexfigures.install TEXMFLOCAL|TEXMFHOME')
