@@ -4,6 +4,8 @@ jobs:
   build:
     docker:
       - image: mjenz/texlive:bionic-vanilla
+    environment:
+      PATH: '/usr/local/texlive/2019/bin/x86_64-linux:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
     steps:
       - checkout
       - run:
