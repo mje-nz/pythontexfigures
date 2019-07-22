@@ -4,12 +4,14 @@ Author: Matthew Edwards
 Date: July 2019
 """
 
-import pkg_resources
+from pathlib import Path
 
 
 def sty_file_as_string():
-    sty = pkg_resources.resource_string(__name__, "pythontexfigures.sty")  # type: bytes
-    return sty.decode('utf8')
+    # importlib.resources.read_text would be better, but I don't feel like adding
+    # a dependency.  pkg_resources does a bunch of weird stuff.  Instead, I've just
+    # set zip_safe=False so this is always a real file.
+    return (Path(__file__).parent/'pythontexfigures.sty').open().read()
 
 
 if __name__ == '__main__':

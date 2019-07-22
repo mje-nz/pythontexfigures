@@ -18,8 +18,6 @@ import matplotlib as mpl
 mpl.use('pgf')
 import matplotlib.pyplot as plt
 
-from .sty import sty_file_as_string
-
 
 SQUARE = 1
 GOLDEN = (1.0 + math.sqrt(5.0))/2.0
@@ -170,6 +168,8 @@ def print_preamble():
     If you don't have pythontexfigures.sty in your TeX tree, you can fudge it by
     calling this in your preamble and following with \printpythontex.
     """
+    # Import this here so python -m pythontexfigures.sty behaves
+    from .sty import sty_file_as_string
     print(r'\makeatletter')
     print(sty_file_as_string().splitlines()[2:])
     print(r'\makeatother')
