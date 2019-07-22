@@ -111,11 +111,21 @@ def _setup_matplotlib(font_size=None):
     if font_size:
         mpl.rcParams['font.size'] = font_size
 
-    # Make legend and tick labels a bit smaller (small is relative to font.size)
+    # Make text a bit smaller (small is relative to font.size)
+    # TODO: Use \footnotesize
+    #       https://tex.stackexchange.com/questions/24599/what-point-pt-font-size-are-large-etc
     mpl.rcParams.update({
-        "legend.fontsize": 'small',
-        "xtick.labelsize": 'small',
-        "ytick.labelsize": 'small'
+        "axes.labelsize": "small",
+        "axes.titlesize": "small",
+        "figure.titlesize": "small",
+        "legend.fontsize": "small",
+        "xtick.labelsize": "small",
+        "ytick.labelsize": "small"
+    })
+
+    mpl.rcParams.update({
+        # Reduce legend label spacing slightly
+        "legend.labelspacing": "0.3"
     })
 
 

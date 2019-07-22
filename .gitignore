@@ -11,3 +11,5 @@ pythontex-files-*/
 *.egg-info/
 /build/
 /dist/
+
+tests/output
