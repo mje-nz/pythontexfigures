@@ -246,8 +246,10 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     pre-configured matplotlib figure and returns a unique name (without extension) for
     the figure.  The figure will then be saved and included as a PGF in the document.
     Any setup done in the document's pythontexcustomcode environment will be available.
+`
+    `main` will be called with any leftover arguments to this function.  The working
+    directory will be the project directory, not the scripts directory.
 
-    `main` will be called with any leftover arguments to this function.
     By default, the figure's filename will be the script name with the figure size
     appended.  To override this, return a string from `main`.  This is important if
     you use a drawing function several times with different arguments in the same
