@@ -202,7 +202,7 @@ def _load_script(script_name):
     return globals_['main']
 
 
-def _draw_figure(figure_func, width, aspect, format_='pgf'):
+def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
     given format and return the filename.
 
@@ -225,11 +225,14 @@ def _draw_figure(figure_func, width, aspect, format_='pgf'):
         name = figure_func()
     # Generate name for figure
     # TODO: Is this a sensible way to define the filename?
+    if name is None:
+        name = default_name
     assert name is not None
     name += '-%.2fx%.2f' % figure_size
 
     assert os.path.isdir(FIGURES_DIR), "Figures dir does not exist"
     figure_filename = os.path.join(FIGURES_DIR, name + '.' + format_)
+    # TODO: Check if already created this run
     plt.savefig(figure_filename, bbox_inches='tight')
     # TODO: Close figures?
     return figure_filename
@@ -244,6 +247,10 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     Any setup done in the document's pythontexcustomcode environment will be available.
 
     `main` will be called with any leftover arguments to this function.
+    By default, the figure's filename will be the script name with the figure size
+    appended.  To override this, return a string from `main`.  This is important if
+    you use a drawing function several times with different arguments in the same
+    document!
 
     Any files read in `main` should either be opened using `pytex.open` or passed to
     `pytex.add_dependencies` (so that pythontex re-runs the script when they change),
@@ -269,7 +276,10 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
         width = TEXT_WIDTH
 
     main = _load_script(script_name)
-    figure_filename = _draw_figure(lambda: main(*args, **kwargs), width, aspect)
+    default_name = os.path.splitext(script_name)[0]
+    figure_filename = _draw_figure(
+        lambda: main(*args, **kwargs), width, aspect, default_name=default_name
+    )
 
     pytex.add_created(figure_filename)
     return r'\input{%s}' % figure_filename
@@ -340,5 +350,8 @@ def run_standalone(main):
     _setup_matplotlib()
 
     print('Drawing...')
-    figure_filename = _draw_figure(main, width=4, aspect=SQUARE, format_='pdf')
+    default_name = os.path.splitext(os.path.basename(main.__globals__['__file__']))[0]
+    figure_filename = _draw_figure(
+        main, width=4, aspect=SQUARE, default_name=default_name, format_='pdf'
+    )
     print('Saved figure as', figure_filename)
