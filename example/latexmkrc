@@ -37,5 +37,6 @@ sub mypythontex {
     # http://mirror.aut.ac.nz/CTAN/support/latexmk/example_rcfiles/pythontex-latexmkrc
     # implies that PythonTeX prints dependency information in .pytxmcr files and uses
     # that to add dependencies, but as far as I can tell it doesn't and never has.
+    # TODO: It's in py_default_default.out.
     return $ret;
 }
