@@ -3,6 +3,7 @@
 Author: Matthew Edwards
 Date: July 2019
 """
+import glob
 import inspect
 import math
 import os
@@ -344,8 +345,10 @@ def run_standalone(main):
     # TODO: Command-line arguments
     # TODO: Stub pytex.open etc
     print('Setting up...')
-    # TODO: Not hard-coded
-    _run_setup_code('example', main.__globals__)
+    # TODO: Specify somehow
+    pytxcode_files = glob.glob('*.pytxcode')
+    assert len(pytxcode_files) == 1
+    _run_setup_code(pytxcode_files[0], main.__globals__)
     _setup_paths()
     _setup_matplotlib()
 
