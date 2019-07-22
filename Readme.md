@@ -53,9 +53,9 @@ pip3 install -e .
 
 To link the LaTeX package into `texmf-local`:
 ```bash
-PF_DIR=$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex/pythontexfigures
-mkdir -p PF_DIR
-ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
+export PF_DIR=$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex/pythontexfigures
+sudo mkdir -p $PF_DIR
+sudo ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
 sudo mktexlsr
 ```
 
