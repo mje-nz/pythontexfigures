@@ -72,10 +72,9 @@ def test_building_example(tmpdir):
     print('Temp dir contents:')
     for f in tmp_dir.iterdir():
         print(f.relative_to(tmp_dir))
-    os.chdir(tmp_dir)
 
     # Run latexmk
-    subprocess.check_call('latexmk example.tex'.split(' '))
+    subprocess.check_call('latexmk example.tex'.split(' '), cwd=tmp_dir)
 
     # Check output is identical
     if files_identical(example_dir/'example.pdf', tmp_dir/'example.pdf'):
