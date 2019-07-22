@@ -125,8 +125,10 @@ def _setup_matplotlib(font_size=None):
     })
 
     mpl.rcParams.update({
+        # Make axes border line width slightly thinner
+        "axes.linewidth": 0.6,
         # Reduce legend label spacing slightly
-        "legend.labelspacing": "0.3"
+        "legend.labelspacing": "0.3",
     })
 
 
@@ -203,6 +205,18 @@ def _load_script(script_name):
     return globals_['main']
 
 
+def _figure_tweaks():
+    """Adjust figure before saving."""
+    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706
+    for axes in plt.gcf().get_axes():
+        # There is no rcParam for the legend border line width, so manually adjust it
+        # to match the default axes border line width
+        legend = axes.get_legend()
+        if legend:
+            frame = legend.get_frame()
+            frame.set_linewidth(mpl.rcParams['axes.linewidth'])
+
+
 def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
     given format and return the filename.
@@ -230,6 +244,8 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
         name = default_name
     assert name is not None
     name += '-%.2fx%.2f' % figure_size
+
+    _figure_tweaks()
 
     assert os.path.isdir(FIGURES_DIR), "Figures dir does not exist"
     figure_filename = os.path.join(FIGURES_DIR, name + '.' + format_)
