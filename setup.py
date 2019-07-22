@@ -7,7 +7,7 @@ with open("Readme.md") as f:
 
 
 setup(name='pythontexfigures',
-      version='0.2.0',
+      version='0.3.0pre',
       description='Embed matplotlib figures into LaTeX documents using PythonTeX',
       long_description=long_description,
       long_description_content_type="text/markdown",
