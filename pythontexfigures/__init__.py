@@ -294,12 +294,12 @@ def _run_setup_code(document_name, globals_):
     calls to `setup`).
 
     Args:
-        document_name (str): The name (excluding extension) of a tex document processed
-            by PythonTeX which contains a pythontexcustomcode environment.
+        document_name (str): The name (with or without extension) of a tex document
+            processed by PythonTeX which contains a pythontexcustomcode environment.
         globals_ (dict): The globals() dictionary from the namespace in which to run the
             setup code.
     """
-    document_name = os.path.basename(document_name)
+    document_name = os.path.splitext(document_name)[0]
     pytxcode_file = document_name + '.pytxcode'
     assert os.path.exists(pytxcode_file)
 
