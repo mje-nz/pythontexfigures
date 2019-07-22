@@ -262,8 +262,8 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
 
     Args:
-        script_name (str): The filename of the script, either as an absolute path or
-            relative to the scripts directory.
+        script_name (str): The filename of the script (with or without extension),
+            either as an absolute path or relative to the scripts directory.
         width (float): The figure width in inches (defaults to \textwidth).  For a
             fraction of \textwidth, use the TEXT_WIDTH constant (e.g., 0.5*TEXT_WIDTH).
         aspect (float): The figure aspect ratio (SQUARE, GOLDEN, or a number).
@@ -276,6 +276,8 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
         # default argument
         width = TEXT_WIDTH
 
+    if not script_name.endswith('.py'):
+        script_name += '.py'
     main = _load_script(script_name)
     default_name = os.path.splitext(script_name)[0]
     figure_filename = _draw_figure(
