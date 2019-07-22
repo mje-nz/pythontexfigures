@@ -8,6 +8,7 @@ import inspect
 import math
 import os
 import os.path
+from pathlib import Path
 import re
 import textwrap
 from typing import Callable, Optional
@@ -31,8 +32,34 @@ DATA_DIR = None  # type: Optional[str]
 FIGURES_DIR = None  # type: Optional[str]
 
 
+def _get_paths_from_latexmkrc(filename):
+    """Parse the given latexmkrc file for paths."""
+    global SCRIPTS_DIR, DATA_DIR
+    regex = re.compile(r"\$pythontex_(\w*?)_dir = [\'\"](\w*?)[\'\"];$")
+
+    # Look for $pythontex_scripts_dir
+    if not os.path.exists(filename):
+        return
+    with open(filename) as latexmkrc:
+        for line in latexmkrc:
+            line = line.strip()
+            match = regex.search(line)
+            if match:
+                dir_type, dir_name = match.groups()
+                if dir_type == 'scripts':
+                    SCRIPTS_DIR = dir_name
+                elif dir_type == 'data':
+                    DATA_DIR = dir_name
+                else:
+                    print("Warning: unrecognised folder in %s (%s)"
+                        % (filename, line))
+
+
 def _setup_paths(scripts_dir=None, data_dir=None):
     """Parse latexmkrc for path definitions, optionally overriding with arguments.
+
+    For any path latexmkrc doesn't set, the defaults pythontexfigures.latexmkrc 
+    is used.
 
     Args:
         scripts_dir (str): Directory containing figure scripts (overrides latexmkrc).
@@ -41,20 +68,9 @@ def _setup_paths(scripts_dir=None, data_dir=None):
     global SCRIPTS_DIR, DATA_DIR, FIGURES_DIR
 
     # Look for $pythontex_scripts_dir etc in latexmkrc
-    if os.path.exists('latexmkrc'):
-        regex = re.compile(r"\$pythontex_(\w*?)_dir = [\'\"](\w*?)[\'\"];$")
-        with open('latexmkrc') as latexmkrc:
-            for line in latexmkrc:
-                line = line.strip()
-                match = regex.search(line)
-                if match:
-                    dir_type, dir_name = match.groups()
-                    if dir_type == 'scripts':
-                        SCRIPTS_DIR = dir_name
-                    elif dir_type == 'data':
-                        DATA_DIR = dir_name
-                    else:
-                        print("Warning: unrecognised PythonTeX folder in latexmkrc (%s)" % line)
+    # Should be importlib.resources.path, but this is easier (see latexmkrc.py)
+    _get_paths_from_latexmkrc(Path(__file__).parent/'latexmkrc')
+    _get_paths_from_latexmkrc('latexmkrc')
 
     # Override directories from latexmkrc with arguments if provided
     if scripts_dir is not None:
