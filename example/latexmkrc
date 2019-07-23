@@ -4,5 +4,21 @@
 # Always generate PDF using pdflatex
 $pdf_mode = 1;
 
+# Colour "Running pdflatex" etc messages
+{
+    no warnings 'redefine';
+    use Term::ANSIColor;
+    my $old_warn_running = \&main::warn_running;
+    sub color_warn_running {
+        print STDERR color('green');
+        $old_warn_running->(@_);
+        print STDERR color('reset');
+    }
+    if (-t STDERR) {
+        # Only use color if a terminal is attached
+        *main::warn_running = \&color_warn_running;
+    }
+}
+
 # Add PythonTeX rules via pythontexfigures
-eval `python3 -m pythontexfigures.latexmkrc`
+eval `python3 -m pythontexfigures.latexmkrc`;
