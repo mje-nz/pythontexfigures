@@ -16,7 +16,6 @@ def test_install():
 def test_sty():
     """Check pythontextfigures.sty prints the LaTeX package."""
     import os
-    print(os.getcwd())
     output = subprocess.check_output('python3 -m pythontexfigures.sty'.split(' '))
     expected = open('pythontexfigures/pythontexfigures.sty', 'rb').read()
     assert output.strip() == expected.strip()

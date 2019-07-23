@@ -233,6 +233,18 @@ def _figure_tweaks():
             frame.set_linewidth(mpl.rcParams['axes.linewidth'])
 
 
+def _pgf_tweaks(filename):
+    """Adjust PGF file after saving."""
+    # Not sure precisely what the behaviour is, but sometimes axis labels get stuck sans
+    # or sans-serif regardless of font.family.  Let's just make remove all the font
+    # family selection and match the document font.
+    # TODO: Figure out exactly what causes this and report bug
+    pgf_text = open(filename).read()
+    pgf_text = pgf_text.replace(r'\rmfamily', '')
+    pgf_text = pgf_text.replace(r'\sffamily', '')
+    open(filename, 'w').write(pgf_text)
+
+
 def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
     given format and return the filename.
@@ -268,6 +280,10 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     # TODO: Check if already created this run
     plt.savefig(figure_filename, bbox_inches='tight')
     # TODO: Close figures?
+
+    if format_ == 'pgf':
+        _pgf_tweaks(figure_filename)
+
     return figure_filename
 
 
