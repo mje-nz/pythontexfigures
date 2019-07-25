@@ -2,7 +2,7 @@
 \usepackage[utf8]{inputenc}
 
 \usepackage{pgf}
-\usepackage{subfig}
+\usepackage{subfiles}
 
 % Make build reproducible
 % https://tex.stackexchange.com/a/5961
@@ -12,10 +12,14 @@
 \pdftrailerid{}
 \pdfsuppressptexinfo=-1
 
+% Use currfile before pythontex does in order to set abspath option
+\usepackage[abspath]{currfile}
 % gobble=auto lets you indent inside code environments
 % keeptemps=all keeps the code and output files so you can see what executed
 \usepackage[gobble=auto,keeptemps=all]{pythontex}
-\usepackage{pythontexfigures}
+% Look for figure scripts in a scripts/ directory in the same folder as the file
+% containing the \pyfig command
+\usepackage[relative]{pythontexfigures}
 \pythontexfigurespath{scripts}
 
 \begin{pythontexcustomcode}[begin]{py}
@@ -32,26 +36,13 @@
 
 
 \begin{document}
-	\title{Latex Python figure examples}
+	\title{pythontexfigures example with subfiles}
 	\author{Matthew Edwards}
 	\date{July 2019}
 	\maketitle
 
-	\begin{figure}[h]
-		\pyfig{'test.py'}
-		\caption{Test Python figure.}
-		\label{fig:test}
-	\end{figure}
-
-	\begin{figure}
-		\centering
-		\subfloat[Test figure (golden aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH, aspect=pf.GOLDEN}
-		}
-		\subfloat[Test figure (square aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH}
-		}
-		\caption{Side-by-side Python figures.}
-		\label{fig:test2}
-	\end{figure}
+	% Each section and its figure scripts in a separate folder, like chapters in a book
+	% or thesis
+    \subfile{sections/section1/section1}
+    \subfile{sections/section2/section2}
 \end{document}

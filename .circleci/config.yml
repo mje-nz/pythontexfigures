@@ -12,7 +12,10 @@ jobs:
           command: |
             pip3 install -e .
             python3 -m pythontexfigures.install TEXMFLOCAL
+            tlmgr install subfiles
       - run:
           command: |
             pip3 install pytest
             pytest
+      - store_artifacts:
+          path: tests/output

@@ -70,7 +70,6 @@ Wishlist:
 * Tables
 * One session per figure
 * Test rasterisation
-* Support for subfiles package
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.
 Note that PythonTeX 0.16 is quite outdated; a patch is included for one issue which is fixed upstream but not yet released.

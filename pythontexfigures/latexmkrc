@@ -2,10 +2,6 @@
 #                              PythonTeX support                              #
 ###############################################################################
 
-# Paths (pythontex_figures parses this file to find these)
-my $pythontex_scripts_dir = 'scripts';
-my $pythontex_data_dir = 'data';
-
 # Delete PythonTeX generated files on latexmk -c
 $clean_ext .= ' pythontex-files-%R/* pythontex-files-%R';
 push @generated_exts, 'pytxcode';

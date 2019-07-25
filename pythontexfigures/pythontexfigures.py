@@ -6,10 +6,7 @@ Date: July 2019
 import glob
 import inspect
 import math
-import os
-import os.path
 from pathlib import Path
-import re
 import textwrap
 from typing import Callable, Optional
 
@@ -29,57 +26,16 @@ GOLDEN = (1.0 + math.sqrt(5.0))/2.0
 pytex = None
 FONT_SIZE = None  # type: Optional[float]
 TEXT_WIDTH = None  # type: Optional[float]
-SCRIPTS_DIR = None  # type: Optional[str]
-DATA_DIR = None  # type: Optional[str]
 FIGURES_DIR = None  # type: Optional[str]
 
 
-def _get_paths_from_latexmkrc(filename):
-    """Parse the given latexmkrc file for paths."""
-    global SCRIPTS_DIR, DATA_DIR
-    regex = re.compile(r"\$pythontex_(\w*?)_dir = [\'\"](\w*?)[\'\"];$")
-
-    # Look for $pythontex_scripts_dir
-    if not os.path.exists(filename):
-        return
-    with open(filename) as latexmkrc:
-        for line in latexmkrc:
-            line = line.strip()
-            match = regex.search(line)
-            if match:
-                dir_type, dir_name = match.groups()
-                if dir_type == 'scripts':
-                    SCRIPTS_DIR = dir_name
-                elif dir_type == 'data':
-                    DATA_DIR = dir_name
-                else:
-                    print("Warning: unrecognised folder in %s (%s)"
-                        % (filename, line))
-
-
-def _setup_paths(scripts_dir=None, data_dir=None):
-    """Parse latexmkrc for path definitions, optionally overriding with arguments.
-
-    For any path latexmkrc doesn't set, the defaults pythontexfigures.latexmkrc 
-    is used.
+def _setup_paths():
+    """Set default search path
 
     Args:
-        scripts_dir (str): Directory containing figure scripts (overrides latexmkrc).
-        data_dir (str): Directory containing figure data files (overrides latexmkrc).
+        scripts_dir (str): Directory containing figure scripts.
     """
-    global SCRIPTS_DIR, DATA_DIR, FIGURES_DIR
-
-    # Look for $pythontex_scripts_dir etc in latexmkrc
-    # Should be importlib.resources.path, but this is easier (see latexmkrc.py)
-    _get_paths_from_latexmkrc(Path(__file__).parent/'latexmkrc')
-    _get_paths_from_latexmkrc('latexmkrc')
-
-    # Override directories from latexmkrc with arguments if provided
-    if scripts_dir is not None:
-        SCRIPTS_DIR = scripts_dir
-    if data_dir is not None:
-        DATA_DIR = data_dir
-
+    global FIGURES_DIR
     try:
         # Put figures in PythonTeX output directory
         FIGURES_DIR = pytex.context.outputdir
@@ -87,8 +43,6 @@ def _setup_paths(scripts_dir=None, data_dir=None):
         # In standalone mode, put figures in working directory
         FIGURES_DIR = "."
 
-    assert SCRIPTS_DIR is not None, "No scripts directory defined"
-    assert DATA_DIR is not None, "No data directory defined"
     assert FIGURES_DIR is not None, "No data directory defined"
 
 
@@ -148,20 +102,15 @@ def _setup_matplotlib(font_size=None):
     })
 
 
-def setup(pytex_, *, scripts_dir=None, data_dir=None):
-    """Configure matplotlib, resolve paths to figure scripts and data, and save pytex
+def setup(pytex_):
+    """Configure matplotlib, resolve paths to figure scripts, and save pytex
     context.
 
     Call this at the start of the PythonTeX custom code, **before** importing
     matplotlib.
 
-    By default the script/data directories from latexmkrc are used, but you can set them
-    here instead if necessary.
-
     Args:
         pytex_ (module): The global PythonTeXUtils instance.
-        scripts_dir (str): Directory containing figure scripts (overrides latexmkrc).
-        data_dir (str): Directory containing figure data files (overrides latexmkrc).
     """
     global pytex, FONT_SIZE, TEXT_WIDTH
 
@@ -178,7 +127,7 @@ def setup(pytex_, *, scripts_dir=None, data_dir=None):
     FONT_SIZE = float(pytex.context.fontsize[:-2])
     TEXT_WIDTH = pytex.pt_to_in(pytex.context.textwidth)
 
-    _setup_paths(scripts_dir, data_dir)
+    _setup_paths()
     _setup_matplotlib()
 
 
@@ -195,18 +144,54 @@ def print_preamble():
     print(r'\makeatother')
 
 
+def _find_script(script_name):
+    """Find a figure script by name.
+
+    TODO
+
+    Args:
+        script_name (str): The filename of the script, either as an absolute path or
+            relative to the script search path.
+    Returns:
+        Path: Script path
+    """
+    script_name = Path(script_name)
+    if script_name.is_absolute():
+        assert script_name.exists()
+        return script_name
+
+    current_file_dir = pytex.context.currdir
+    script_subfolder = pytex.context.scriptpath
+
+    if current_file_dir:
+        # With the 'relative' package option, look for scripts relative to the file
+        # being processed
+        script_dir = Path(current_file_dir)
+        if script_subfolder:
+            script_subfolder = Path(script_subfolder)
+            assert not script_subfolder.is_absolute()
+    else:
+        # Otherwise, look for scripts relative to the current working directory
+        script_dir = Path()
+    script_path = script_dir/script_subfolder/script_name
+    #print('Script path:', script_path)
+    script_path = script_path.resolve()
+    assert script_path.exists()
+    return script_path
+
+
 def _load_script(script_name):
     """Load the main() function from the given script, such that it will run in the
     PythonTeX session's namespace.
 
     Args:
         script_name (str): The filename of the script, either as an absolute path or
-            relative to the scripts directory.
+            relative to the script search path.
 
     Returns:
         Callable[..., str]: The main() function.
     """
-    script_path = os.path.join(SCRIPTS_DIR, script_name)
+    script_path = _find_script(script_name)
 
     # Copy the globals from the PythonTeX session's namespace (so imports from the setup
     # block are present), but set __file__ and __name__ such that it looks like it's
@@ -279,8 +264,8 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
 
     _figure_tweaks()
 
-    assert os.path.isdir(FIGURES_DIR), "Figures dir does not exist"
-    figure_filename = os.path.join(FIGURES_DIR, name + '.' + format_)
+    assert Path(FIGURES_DIR).is_dir(), "Figures dir does not exist"
+    figure_filename = Path(FIGURES_DIR)/(name + '.' + format_)
     # TODO: Check if already created this run
     plt.savefig(figure_filename, bbox_inches='tight')
     # TODO: Close figures?
@@ -333,7 +318,7 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     if not script_name.endswith('.py'):
         script_name += '.py'
     main = _load_script(script_name)
-    default_name = os.path.splitext(script_name)[0]
+    default_name = Path(script_name).stem
     figure_filename = _draw_figure(
         lambda: main(*args, **kwargs), width, aspect, default_name=default_name
     )
@@ -355,9 +340,9 @@ def _run_setup_code(document_name, globals_):
         globals_ (dict): The globals() dictionary from the namespace in which to run the
             setup code.
     """
-    document_name = os.path.splitext(document_name)[0]
+    document_name = Path(document_name).stem
     pytxcode_file = document_name + '.pytxcode'
-    assert os.path.exists(pytxcode_file)
+    assert Path(pytxcode_file).exists()
 
     # Find the pythontexcustomcode section
     custom_code_lines = section_of_file(
@@ -396,7 +381,7 @@ def run_standalone(main):
     _setup_matplotlib()
 
     print('Drawing...')
-    default_name = os.path.splitext(os.path.basename(main.__globals__['__file__']))[0]
+    default_name = Path(main.__globals__['__file__']).stem
     figure_filename = _draw_figure(
         main, width=4, aspect=SQUARE, default_name=default_name, format_='pdf'
     )

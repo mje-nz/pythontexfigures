@@ -1,9 +1,41 @@
 \ProvidesPackage{pythontexfigures}
 
-% Pass font size, text width, and PythonTeX output dir into scripts
+\RequirePackage{kvoptions}
+
+\SetupKeyvalOptions{family=pytxf,prefix=pytxf@}
+% Look for figure scripts relative to the current file, not the current working
+% directory.
+\DeclareBoolOption{relative}
+\ProcessKeyvalOptions*
+
+\ifpytxf@relative
+    \RequirePackage[abspath]{currfile}
+    \newcommand{\pytxf@currdir}{\currfileabsdir}
+\else
+    \newcommand{\pytxf@currdir}{}
+\fi
+
+% Look for figure scripts in a folder or subfolder.  If the 'relative' option is
+% specified, this must be a relative path (and will be relative to the file being
+% processed).
+\def\pythontexfigurespath#1{\def\pytxf@scriptpath{#1}}
+\ifx \pytxf@scriptpath \@undefined
+    \def\pytxf@scriptpath{}
+\fi
+
+% Get font size
 % https://tex.stackexchange.com/a/409993
-\newcommand*\fsize{\dimexpr\f@size pt\relax}
-\setpythontexcontext{fontsize=\the\fsize,textwidth=\the\textwidth,outputdir=\pytx@outputdir}
+\newcommand*\pytxf@fsize{\dimexpr\f@size pt\relax}
+
+% Pass font size, text width, script path, current directory (if relative option
+% enabled), and PythonTeX output dir into scripts.
+\setpythontexcontext{%
+    fontsize=\the\pytxf@fsize,%
+    textwidth=\the\textwidth,%
+    scriptpath=\pytxf@scriptpath,%
+    currdir=\pytxf@currdir,%
+    outputdir=\pytx@outputdir%
+}
 
 % Until there's a new (> 0.16) release of PythonTeX, patch issue #65
 % https://github.com/gpoore/pythontex/issues/65
