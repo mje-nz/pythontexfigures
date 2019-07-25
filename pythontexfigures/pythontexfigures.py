@@ -19,6 +19,8 @@ import matplotlib as mpl
 mpl.use('pgf')
 import matplotlib.pyplot as plt
 
+from .util import section_of_file
+
 
 SQUARE = 1
 GOLDEN = (1.0 + math.sqrt(5.0))/2.0
@@ -355,25 +357,12 @@ def _run_setup_code(document_name, globals_):
     pytxcode_file = document_name + '.pytxcode'
     assert os.path.exists(pytxcode_file)
 
-    with open(pytxcode_file, 'r') as pytxcode:
-        lines = pytxcode.readlines()
     # Find the pythontexcustomcode section
-    start_index = None
-    for i, line in enumerate(lines):
-        if line.startswith('=>PYTHONTEX#CC:py:begin'):
-            # Custom code starts from the next line
-            start_index = i + 1
-            break
-    assert start_index is not None
-    end_index = None
-    for i, line in enumerate(lines[start_index:]):
-        if line.startswith('=>PYTHONTEX'):
-            # Custom code ends at this line
-            end_index = start_index + i
-            break
-    assert end_index is not None
-    custom_code_lines = lines[start_index:end_index]
-
+    custom_code_lines = section_of_file(
+        pytxcode_file, lambda line: line.startswith('=>PYTHONTEX#CC:py:begin'),
+        lambda line: line.startswith('=>PYTHONTEX')
+    )
+    
     # Remove call to setup()
     # TODO: Handle setting figure/data paths
     custom_code_lines = [line for line in custom_code_lines
