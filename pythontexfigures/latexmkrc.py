@@ -1,11 +1,14 @@
-"""Wrapper for reading latexmkrc from wherever it gets packaged.
+"""Helpers for adding PythonTeX support to latexmkrc.
 
 Author: Matthew Edwards
 Date: July 2019
 """
 
+import glob
 from pathlib import Path
-from pkg_resources import resource_filename, resource_string as resource_bytes
+import sys
+
+from .util import section_of_file
 
 
 def latexmkrc_as_string():
@@ -16,15 +19,43 @@ def latexmkrc_as_string():
     return (Path(__file__).parent/'latexmkrc').open().read()
 
 
-def latexmkrc_with_dependencies():
-    """Return `latexmkrc` with dependencies on the files in this package added."""
-    # Again, importlib.resources.contents would be better.
-    dep_files = [p for p in sorted(Path(__file__).parent.iterdir()) if p.is_file()]
-    dep_commands = ['    rdb_ensure_file($rule, "%s");' % f for f in dep_files]
-    return latexmkrc_as_string().replace(
-        '    ### <depend on pythontexfigures package>',
-        '    # Depend on pythontexfigures package files\n' + '\n'.join(dep_commands)
+def dependencies_in_out_file(filename):
+    """Extract the dependency list from a PythonTeX .out file.
+
+    Args:
+        filename (str): A PythonTeX .out file.
+
+    Returns:
+        list[str]: The dependencies as a list of filenames.
+    """
+    deps = section_of_file(
+        filename, lambda line: line == "=>PYTHONTEX:DEPENDENCIES#\n",
+        lambda line: line.startswith("=>")
     )
+    return [line.strip() for line in deps]
+
+
+def dependency_rules_for_folder(folder):
+    """Return latexmk dependency rules for all the PythonTeX dependencies in a
+    PythonTeX output directory.
+
+    Args:
+        folder (str): A PythonTeX output directory.
+
+    Returns:
+        list[str]: Perl commands to add each dependency.
+    """
+    deps = []
+    for filename in glob.glob(str(Path(folder)/'*.out')):
+        deps += dependencies_in_out_file(filename)
+    rules = [f"rdb_ensure_file($rule, '{filename}');" for filename in set(deps)]
+    return rules
+
 
 if __name__ == '__main__':
-    print(latexmkrc_with_dependencies())
+    # TODO: Not lazy
+    if '--get-deps' in sys.argv:
+        assert len(sys.argv) == 3
+        print("\n".join(dependency_rules_for_folder(sys.argv[2])))
+    else:
+        print(latexmkrc_as_string())

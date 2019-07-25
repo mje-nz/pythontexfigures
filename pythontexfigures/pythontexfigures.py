@@ -169,8 +169,10 @@ def setup(pytex_, *, scripts_dir=None, data_dir=None):
     assert pytex_ is not None
     pytex = pytex_
 
-    # Re-run pythontex when this file changes
-    pytex.add_dependencies(__file__)
+    # Re-run pythontex when files in this package change
+    for path in sorted(Path(__file__).parent.iterdir()):
+        if path.is_file():
+            pytex.add_dependencies(path)
 
     # Save \fsize and \textwidth as "constants"
     FONT_SIZE = float(pytex.context.fontsize[:-2])
