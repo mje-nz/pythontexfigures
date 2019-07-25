@@ -1,3 +1,8 @@
+"""Integration test for example documents.
+
+Author: Matthew Edwards
+Date: July 2019
+"""
 import hashlib
 import os
 from pathlib import Path
@@ -60,11 +65,11 @@ def image_difference(a, b):
     return float(normalised[1:-1])
 
 
-def test_building_example(tmpdir):
-    """Build the example file and check the output is identical."""
+def test_building_basic_example(tmpdir):
+    """Build the basic example document and check the output is identical."""
     # Copy files into temp dir
     project_dir = Path(__file__).resolve().parent.parent  # type: Path
-    example_dir = project_dir/'example'
+    example_dir = project_dir/'examples'/'basic'
     tmp_dir = Path(tmpdir)
     os.mkdir(tmp_dir/'scripts')
     for name in ['latexmkrc', 'example.tex', 'scripts/test.py']:

@@ -1,4 +1,4 @@
-"""Tests for installer and sty helper.
+"""Integration tests for installer and sty helper.
 
 Author: Matthew Edwards
 Date: July 2019
