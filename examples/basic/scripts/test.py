@@ -7,14 +7,15 @@ Date: July 2019
 
 def main():
     x = np.linspace(0, 10, 100)
-    y = x**2
-    plt.plot(x, y, label='$x^2$')
-    plt.xlabel('$x$')
-    plt.ylabel('$y$')
+    y = x ** 2
+    plt.plot(x, y, label="$x^2$")
+    plt.xlabel("$x$")
+    plt.ylabel("$y$")
     plt.legend()
-    return 'test'  # Figure filename
+    return "test"  # Figure filename
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pythontexfigures as pf
+
     pf.run_standalone(main)

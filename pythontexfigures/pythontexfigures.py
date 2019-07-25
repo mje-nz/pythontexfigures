@@ -6,21 +6,22 @@ Date: July 2019
 import glob
 import inspect
 import math
-from pathlib import Path
 import textwrap
+from pathlib import Path
 from typing import Callable, Optional
 
 import matplotlib as mpl
+
 # When generating PDF figures, use PGF backend so it looks the same as it will when
 # called from LaTeX
-mpl.use('pgf')
-import matplotlib.pyplot as plt
+mpl.use("pgf")
+import matplotlib.pyplot as plt  # isort:skip
 
-from .util import section_of_file
+from .util import section_of_file  # isort:skip
 
 
 SQUARE = 1
-GOLDEN = (1.0 + math.sqrt(5.0))/2.0
+GOLDEN = (1.0 + math.sqrt(5.0)) / 2.0
 
 # Placeholders for setup()
 pytex = None
@@ -54,52 +55,60 @@ def _setup_matplotlib(font_size=None):
             size (or matplotlib default in standalone mode).
     """
     # Set up PGF backend
-    mpl.rcParams.update({
-        # Use pdflatex instead of xelatex
-        "pgf.texsystem": "pdflatex",
-        # Use LaTeX instead of mathtext for all text rendering
-        "text.usetex": True,
-        # Fix input and font encoding
-        "pgf.preamble": [
-            r"\usepackage[utf8x]{inputenc}",
-            r"\usepackage[T1]{fontenc}"
-        ]
-    })
+    mpl.rcParams.update(
+        {
+            # Use pdflatex instead of xelatex
+            "pgf.texsystem": "pdflatex",
+            # Use LaTeX instead of mathtext for all text rendering
+            "text.usetex": True,
+            # Fix input and font encoding
+            "pgf.preamble": [
+                r"\usepackage[utf8x]{inputenc}",
+                r"\usepackage[T1]{fontenc}",
+            ],
+        }
+    )
 
     # Use default LaTeX fonts (to match appearance for PDFs, to get correct layout for
     # PGFs)
-    mpl.rcParams.update({
-        "font.family": "serif",
-        "font.serif": [],
-        "font.sans-serif": [],
-        "font.monospace": []
-    })
+    mpl.rcParams.update(
+        {
+            "font.family": "serif",
+            "font.serif": [],
+            "font.sans-serif": [],
+            "font.monospace": [],
+        }
+    )
 
     # Set base font size
     if font_size is None and FONT_SIZE is not None:
         # Use document font size
         font_size = FONT_SIZE
     if font_size:
-        mpl.rcParams['font.size'] = font_size
+        mpl.rcParams["font.size"] = font_size
 
     # Make text a bit smaller (small is relative to font.size)
     # TODO: Use \footnotesize
     #       https://tex.stackexchange.com/questions/24599/what-point-pt-font-size-are-large-etc
-    mpl.rcParams.update({
-        "axes.labelsize": "small",
-        "axes.titlesize": "small",
-        "figure.titlesize": "small",
-        "legend.fontsize": "small",
-        "xtick.labelsize": "small",
-        "ytick.labelsize": "small"
-    })
+    mpl.rcParams.update(
+        {
+            "axes.labelsize": "small",
+            "axes.titlesize": "small",
+            "figure.titlesize": "small",
+            "legend.fontsize": "small",
+            "xtick.labelsize": "small",
+            "ytick.labelsize": "small",
+        }
+    )
 
-    mpl.rcParams.update({
-        # Make axes border line width slightly thinner
-        "axes.linewidth": 0.6,
-        # Reduce legend label spacing slightly
-        "legend.labelspacing": "0.3",
-    })
+    mpl.rcParams.update(
+        {
+            # Make axes border line width slightly thinner
+            "axes.linewidth": 0.6,
+            # Reduce legend label spacing slightly
+            "legend.labelspacing": "0.3",
+        }
+    )
 
 
 def setup(pytex_):
@@ -133,15 +142,16 @@ def setup(pytex_):
 
 def print_preamble():
     r"""Print the contents of pythontexfigures.sty formatted to go in the preamble.
-    
+
     If you don't have pythontexfigures.sty in your TeX tree, you can fudge it by
     calling this in your preamble and following with \printpythontex.
     """
     # Import this here so python -m pythontexfigures.sty behaves
     from .sty import sty_file_as_string
-    print(r'\makeatletter')
+
+    print(r"\makeatletter")
     print(sty_file_as_string().splitlines()[2:])
-    print(r'\makeatother')
+    print(r"\makeatother")
 
 
 def _find_script(script_name):
@@ -173,8 +183,8 @@ def _find_script(script_name):
     else:
         # Otherwise, look for scripts relative to the current working directory
         script_dir = Path()
-    script_path = script_dir/script_subfolder/script_name
-    #print('Script path:', script_path)
+    script_path = script_dir / script_subfolder / script_name
+    # print('Script path:', script_path)
     script_path = script_path.resolve()
     assert script_path.exists()
     return script_path
@@ -197,17 +207,14 @@ def _load_script(script_name):
     # block are present), but set __file__ and __name__ such that it looks like it's
     # being imported normally.  Note that this will totally break if this function isn't
     # exactly two calls down from a PythonTeX environment.
-    assert inspect.stack()[2].filename.startswith('pythontex-files-')
+    assert inspect.stack()[2].filename.startswith("pythontex-files-")
     globals_ = inspect.stack()[2].frame.f_globals.copy()
-    globals_.update({
-        "__file__": script_path,
-        "__name__": script_name,
-    })
+    globals_.update({"__file__": script_path, "__name__": script_name})
 
     # https://stackoverflow.com/a/41658338
-    with pytex.open(script_path, 'rb') as file:
-        exec(compile(file.read(), filename=script_path, mode='exec'), globals_)
-    return globals_['main']
+    with pytex.open(script_path, "rb") as file:
+        exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
+    return globals_["main"]
 
 
 def _figure_tweaks():
@@ -219,7 +226,7 @@ def _figure_tweaks():
         legend = axes.get_legend()
         if legend:
             frame = legend.get_frame()
-            frame.set_linewidth(mpl.rcParams['axes.linewidth'])
+            frame.set_linewidth(mpl.rcParams["axes.linewidth"])
 
 
 def _pgf_tweaks(filename):
@@ -229,12 +236,12 @@ def _pgf_tweaks(filename):
     # family selection and match the document font.
     # TODO: Figure out exactly what causes this and report bug
     pgf_text = open(filename).read()
-    pgf_text = pgf_text.replace(r'\rmfamily', '')
-    pgf_text = pgf_text.replace(r'\sffamily', '')
-    open(filename, 'w').write(pgf_text)
+    pgf_text = pgf_text.replace(r"\rmfamily", "")
+    pgf_text = pgf_text.replace(r"\sffamily", "")
+    open(filename, "w").write(pgf_text)
 
 
-def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
+def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
     given format and return the filename.
 
@@ -248,7 +255,7 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     Returns:
         str: The saved figure's filename.
     """
-    figure_size = (width, width/aspect)
+    figure_size = (width, width / aspect)
     plt.figure(figsize=figure_size)
 
     # TODO: Stub out plt.figure
@@ -260,17 +267,17 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_='pgf'):
     if name is None:
         name = default_name
     assert name is not None
-    name += '-%.2fx%.2f' % figure_size
+    name += "-%.2fx%.2f" % figure_size
 
     _figure_tweaks()
 
     assert Path(FIGURES_DIR).is_dir(), "Figures dir does not exist"
-    figure_filename = Path(FIGURES_DIR)/(name + '.' + format_)
+    figure_filename = Path(FIGURES_DIR) / (name + "." + format_)
     # TODO: Check if already created this run
-    plt.savefig(figure_filename, bbox_inches='tight')
+    plt.savefig(figure_filename, bbox_inches="tight")
     # TODO: Close figures?
 
-    if format_ == 'pgf':
+    if format_ == "pgf":
         _pgf_tweaks(figure_filename)
 
     return figure_filename
@@ -315,8 +322,8 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
         # default argument
         width = TEXT_WIDTH
 
-    if not script_name.endswith('.py'):
-        script_name += '.py'
+    if not script_name.endswith(".py"):
+        script_name += ".py"
     main = _load_script(script_name)
     default_name = Path(script_name).stem
     figure_filename = _draw_figure(
@@ -324,7 +331,7 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     )
 
     pytex.add_created(figure_filename)
-    return r'\input{%s}' % figure_filename
+    return r"\input{%s}" % figure_filename
 
 
 def _run_setup_code(document_name, globals_):
@@ -341,23 +348,25 @@ def _run_setup_code(document_name, globals_):
             setup code.
     """
     document_name = Path(document_name).stem
-    pytxcode_file = document_name + '.pytxcode'
+    pytxcode_file = document_name + ".pytxcode"
     assert Path(pytxcode_file).exists()
 
     # Find the pythontexcustomcode section
     custom_code_lines = section_of_file(
-        pytxcode_file, lambda line: line.startswith('=>PYTHONTEX#CC:py:begin'),
-        lambda line: line.startswith('=>PYTHONTEX')
+        pytxcode_file,
+        lambda line: line.startswith("=>PYTHONTEX#CC:py:begin"),
+        lambda line: line.startswith("=>PYTHONTEX"),
     )
-    
+
     # Remove call to setup()
     # TODO: Handle setting figure/data paths
-    custom_code_lines = [line for line in custom_code_lines
-                         if not line.strip().endswith('.setup(pytex)')]
+    custom_code_lines = [
+        line for line in custom_code_lines if not line.strip().endswith(".setup(pytex)")
+    ]
 
     # Execute
-    custom_code = textwrap.dedent(''.join(custom_code_lines))
-    exec(compile(custom_code, filename='<pythontexcustomcode>', mode='exec'), globals_)
+    custom_code = textwrap.dedent("".join(custom_code_lines))
+    exec(compile(custom_code, filename="<pythontexcustomcode>", mode="exec"), globals_)
 
 
 def run_standalone(main):
@@ -372,17 +381,17 @@ def run_standalone(main):
     """
     # TODO: Command-line arguments
     # TODO: Stub pytex.open etc
-    print('Setting up...')
+    print("Setting up...")
     # TODO: Specify somehow
-    pytxcode_files = glob.glob('*.pytxcode')
+    pytxcode_files = glob.glob("*.pytxcode")
     assert len(pytxcode_files) == 1
     _run_setup_code(pytxcode_files[0], main.__globals__)
     _setup_paths()
     _setup_matplotlib()
 
-    print('Drawing...')
-    default_name = Path(main.__globals__['__file__']).stem
+    print("Drawing...")
+    default_name = Path(main.__globals__["__file__"]).stem
     figure_filename = _draw_figure(
-        main, width=4, aspect=SQUARE, default_name=default_name, format_='pdf'
+        main, width=4, aspect=SQUARE, default_name=default_name, format_="pdf"
     )
-    print('Saved figure as', figure_filename)
+    print("Saved figure as", figure_filename)
