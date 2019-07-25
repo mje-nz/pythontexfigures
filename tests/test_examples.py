@@ -95,6 +95,7 @@ def test_building_basic_example(tmpdir):
     except (subprocess.CalledProcessError, AssertionError):
         out_dir = project_dir/'tests'/'output'  # type: Path
         out_dir.mkdir(exist_ok=True)
+        print('Copying results to', out_dir)
         shutil.copy(example_dir/'example.pdf', out_dir)
         for f in tmp_dir.glob('*.png'):
             shutil.copy(f, out_dir)

@@ -73,3 +73,27 @@ def test_dependency_rules_for_folder(out_dir):
         "rdb_ensure_file($rule, 'scripts/test.py');"
     ]
 
+
+@pytest.fixture
+def out_dir_without_deps(tmpdir):
+    """Construct some fake PythonTeX .out files with no dependencies."""
+    (Path(tmpdir)/'py_basic_default.out').open('w').write(textwrap.dedent(r"""
+        =>PYTHONTEX:STDOUT#0CC#code#
+        =>PYTHONTEX:STDOUT#0#i#
+        \input{pythontex-files-example/test-5.40x5.40.pgf}
+        =>PYTHONTEX:DEPENDENCIES#
+        """))
+    (Path(tmpdir)/'py_subfiles_default.out').open('w').write(textwrap.dedent(r"""
+        =>PYTHONTEX:STDOUT#0CC#code#
+        =>PYTHONTEX:STDOUT#0#i#
+        \input{pythontex-files-example-with-subfiles/poynomial-2-0-0-5.40x5.40.pgf}
+        """))
+    return tmpdir
+
+
+def test_dependecy_rules_for_folder_without_deps(out_dir_without_deps):
+    assert latexmkrc.dependency_rules_for_folder(out_dir_without_deps) == []
+
+
+def test_dependecy_rules_for_empty_folder(tmpdir):
+    assert latexmkrc.dependency_rules_for_folder(tmpdir) == []

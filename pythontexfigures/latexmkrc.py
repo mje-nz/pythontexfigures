@@ -28,11 +28,14 @@ def dependencies_in_out_file(filename):
     Returns:
         list[str]: The dependencies as a list of filenames.
     """
-    deps = section_of_file(
-        filename, lambda line: line == "=>PYTHONTEX:DEPENDENCIES#\n",
-        lambda line: line.startswith("=>")
-    )
-    return [line.strip() for line in deps]
+    try:
+        deps = section_of_file(
+            filename, lambda line: line == "=>PYTHONTEX:DEPENDENCIES#\n",
+            lambda line: line.startswith("=>")
+        )
+        return [line.strip() for line in deps]
+    except ValueError:
+        return []
 
 
 def dependency_rules_for_folder(folder):
