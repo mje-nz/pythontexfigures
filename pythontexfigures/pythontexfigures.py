@@ -8,16 +8,16 @@ import inspect
 import math
 import textwrap
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional  # noqa: F401
 
 import matplotlib as mpl
 
 # When generating PDF figures, use PGF backend so it looks the same as it will when
 # called from LaTeX
 mpl.use("pgf")
-import matplotlib.pyplot as plt  # isort:skip
+import matplotlib.pyplot as plt  # noqa: E402 isort:skip
 
-from .util import section_of_file  # isort:skip
+from .util import section_of_file  # noqa: E402 isort:skip
 
 
 SQUARE = 1
@@ -219,7 +219,7 @@ def _load_script(script_name):
 
 def _figure_tweaks():
     """Adjust figure before saving."""
-    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706
+    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706  # noqa:B950
     for axes in plt.gcf().get_axes():
         # There is no rcParam for the legend border line width, so manually adjust it
         # to match the default axes border line width

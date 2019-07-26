@@ -4,7 +4,7 @@ Author: Matthew Edwards
 Date: July 2019
 """
 
-from typing import Callable
+from typing import Callable  # noqa: F401
 
 
 def section_of_file(filename, from_expr, to_expr):

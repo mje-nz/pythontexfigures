@@ -1,6 +1,6 @@
 import functools
 
-from .pythontexfigures import *
+from .pythontexfigures import *  # noqa: F401,F403
 from .pythontexfigures import setup as _setup
 
 

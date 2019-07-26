@@ -77,7 +77,7 @@ def test_dependecy_rules_for_file(out_dir):
 def test_dependency_rules_for_folder(out_dir):
     rules = latexmkrc.dependency_rules_for_folder(out_dir)
     assert sorted(rules) == [
-        "rdb_ensure_file($rule, '/Users/Matthew/Code/Uni/latex-python-figures/pythontexfigures/pythontexfigures.py');",
+        "rdb_ensure_file($rule, '/Users/Matthew/Code/Uni/latex-python-figures/pythontexfigures/pythontexfigures.py');",  # noqa: B950
         "rdb_ensure_file($rule, 'scripts/polynomial.py');",
         "rdb_ensure_file($rule, 'scripts/test.py');",
     ]
