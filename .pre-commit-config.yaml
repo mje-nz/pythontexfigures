@@ -4,11 +4,11 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/asottile/seed-isort-config
-    rev: v1.9.1
+    rev: v1.9.2
     hooks:
       - id: seed-isort-config
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.21
+  - repo: https://github.com/timothycrosley/isort
+    rev: 4.3.21-2
     hooks:
       - id: isort
   - repo: https://github.com/PyCQA/pydocstyle
@@ -16,10 +16,11 @@ repos:
     hooks:
       - id: pydocstyle
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.1.0
+    rev: v2.2.3
     hooks:
       - id: check-merge-conflict
       - id: check-symlinks
+      - id: check-yaml
       - id: end-of-file-fixer
       - id: flake8
         additional_dependencies:

@@ -1,6 +1,15 @@
 version: 2.1
 
 jobs:
+  check:
+    docker:
+      - image: python:3.7
+    steps:
+      - checkout
+      - run:
+          command: |
+            pip3 install pre-commit
+            pre-commit run --all-files --verbose --show-diff-on-failure
   build:
     docker:
       - image: mjenz/texlive:bionic-vanilla
@@ -19,3 +28,10 @@ jobs:
             pytest
       - store_artifacts:
           path: tests/output
+
+workflows:
+  version: 2
+  check_and_build:
+    jobs:
+      - check
+      - build
