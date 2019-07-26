@@ -59,6 +59,7 @@ def out_dir(tmpdir):
 
 
 def test_dependecy_rules_for_file(out_dir):
+    """Test dependencies_in_out_file against sample files."""
     deps = latexmkrc.dependencies_in_out_file(Path(out_dir) / "py_basic_default.out")
     assert sorted(set(deps)) == [
         "/Users/Matthew/Code/Uni/latex-python-figures/pythontexfigures/pythontexfigures.py",
@@ -75,6 +76,7 @@ def test_dependecy_rules_for_file(out_dir):
 
 
 def test_dependency_rules_for_folder(out_dir):
+    """Test dependencies_for_folder against sample files."""
     rules = latexmkrc.dependency_rules_for_folder(out_dir)
     assert sorted(rules) == [
         "rdb_ensure_file($rule, '/Users/Matthew/Code/Uni/latex-python-figures/pythontexfigures/pythontexfigures.py');",  # noqa: B950
@@ -109,8 +111,10 @@ def out_dir_without_deps(tmpdir):
 
 
 def test_dependecy_rules_for_folder_without_deps(out_dir_without_deps):
+    """Test dependencies_for_folder against sample files without any dependencies."""
     assert latexmkrc.dependency_rules_for_folder(out_dir_without_deps) == []
 
 
 def test_dependecy_rules_for_empty_folder(tmpdir):
+    """Test dependencies_for_folder against empty folder."""
     assert latexmkrc.dependency_rules_for_folder(tmpdir) == []

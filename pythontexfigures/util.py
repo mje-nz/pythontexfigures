@@ -8,7 +8,7 @@ from typing import Callable  # noqa: F401
 
 
 def section_of_file(filename, from_expr, to_expr):
-    """Return the section of the line between the lines matching two expressions.
+    """Get the section of a file between the lines matching two expressions.
 
     Args:
         filename (str): File to read.

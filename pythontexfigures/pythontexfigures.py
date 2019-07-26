@@ -31,12 +31,9 @@ FIGURES_DIR = None  # type: Optional[str]
 
 
 def _setup_paths():
-    """Set default search path
-
-    Args:
-        scripts_dir (str): Directory containing figure scripts.
-    """
+    """Set figure path from PythonTeX context."""
     global FIGURES_DIR
+    # TODO: remove this global and just use a function
     try:
         # Put figures in PythonTeX output directory
         FIGURES_DIR = pytex.context.outputdir
@@ -112,8 +109,7 @@ def _setup_matplotlib(font_size=None):
 
 
 def setup(pytex_):
-    """Configure matplotlib, resolve paths to figure scripts, and save pytex
-    context.
+    """Configure matplotlib and save pytex context.
 
     Call this at the start of the PythonTeX custom code, **before** importing
     matplotlib.
@@ -157,13 +153,15 @@ def print_preamble():
 def _find_script(script_name):
     """Find a figure script by name.
 
-    TODO
+    The path from pythontexfigures is used.  With package option 'relative', the path is
+    relative to the file being processed.
 
     Args:
         script_name (str): The filename of the script, either as an absolute path or
             relative to the script search path.
+
     Returns:
-        Path: Script path
+        Path: Script path.
     """
     script_name = Path(script_name)
     if script_name.is_absolute():
@@ -250,6 +248,7 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
             figure, and returns a unique name for the figure.
         width (float): The figure width in inches.
         aspect (float): The figure aspect ratio.
+        default_name (str): The filename to use if `figure_func` does not return one.
         format_ (str): The file format in which to save the figure ('pdf' or 'pgf').
 
     Returns:
@@ -290,7 +289,7 @@ def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
     pre-configured matplotlib figure and returns a unique name (without extension) for
     the figure.  The figure will then be saved and included as a PGF in the document.
     Any setup done in the document's pythontexcustomcode environment will be available.
-`
+
     `main` will be called with any leftover arguments to this function.  The working
     directory will be the project directory, not the scripts directory.
 

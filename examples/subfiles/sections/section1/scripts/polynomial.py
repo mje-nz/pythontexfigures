@@ -8,6 +8,7 @@ import numpy as np
 
 
 def main(c, x=np.linspace(-5, 5, 100)):  # noqa: B008
+    """Draw a polynomial."""
     y = np.polyval(c, x)
     label = (
         "$"

@@ -6,6 +6,7 @@ Date: July 2019
 
 
 def main():
+    """Draw x**2 on [0, 10]."""
     x = np.linspace(0, 10, 100)
     y = x ** 2
     plt.plot(x, y, label="$x^2$")

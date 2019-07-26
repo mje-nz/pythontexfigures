@@ -1,3 +1,4 @@
+"""pythontexfigures setup."""
 from setuptools import setup
 
 with open("Readme.md") as f:

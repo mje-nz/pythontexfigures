@@ -49,9 +49,11 @@ def image_difference(a, b):
     """Get the RMS pixel difference between two images using ImageMagick.
 
     See https://www.imagemagick.org/Usage/compare/
+
     Args:
         a (Union[str, Path]): Filename of first image.
         b (Union[str, Path]): Filename of second image.
+
     Returns:
         float: RMS pixel error (0-1).
     """

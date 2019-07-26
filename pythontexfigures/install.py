@@ -12,6 +12,7 @@ from .sty import sty_file_as_string
 
 
 def install(tree="TEXMFLOCAL"):
+    """Copy pythontexfigures.sty into the given TeX tree, then reun mktexlsr."""
     texmf_path = subprocess.check_output(["kpsewhich", "-var-value=" + tree])
     texmf_path = texmf_path.decode("utf8").strip()
     path = Path(texmf_path) / "tex" / "latex" / "pythontexfigures"
