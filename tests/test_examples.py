@@ -132,13 +132,14 @@ def copy_subfiles_files(tmpdir):
     example_dir = project_dir / "examples" / "subfiles"
     tmp_dir = Path(tmpdir)
     (tmp_dir / "sections" / "section1" / "scripts").mkdir(parents=True)
-    (tmp_dir / "sections" / "section2").mkdir(parents=True)
+    (tmp_dir / "sections" / "section2" / "scripts").mkdir(parents=True)
     for name in [
         "latexmkrc",
         "example-with-subfiles.tex",
         "sections/section1/section1.tex",
         "sections/section1/scripts/polynomial.py",
         "sections/section2/section2.tex",
+        "sections/section2/scripts/sincos.py",
     ]:
         shutil.copy(example_dir / name, tmp_dir / name)
     print("Temp dir contents:")

@@ -3,7 +3,6 @@
 Author: Matthew Edwards
 Date: July 2019
 """
-# noqa: F821
 import numpy as np
 
 
