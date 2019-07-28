@@ -286,7 +286,7 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
     figure_filename = Path(FIGURES_DIR) / (name + "." + format_)
     # TODO: Check if already created this run
     plt.savefig(figure_filename, bbox_inches="tight")
-    # TODO: Close figures?
+    plt.close("all")
 
     if format_ == "pgf":
         _pgf_tweaks(figure_filename)
