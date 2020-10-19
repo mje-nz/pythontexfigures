@@ -60,10 +60,10 @@ def _setup_matplotlib(font_size=None):
             # Use LaTeX instead of mathtext for all text rendering
             "text.usetex": True,
             # Fix input and font encoding
-            "pgf.preamble": [
+            "pgf.preamble": "\n".join([
                 r"\usepackage[utf8x]{inputenc}",
                 r"\usepackage[T1]{fontenc}",
-            ],
+            ]),
         }
     )
 
