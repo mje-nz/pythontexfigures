@@ -51,12 +51,11 @@ To install the Python package in editable mode:
 pip3 install -e .
 ```
 
-To link the LaTeX package into `texmf-local`:
+To link the LaTeX package into [your private tree](https://www.texfaq.org/FAQ-privinst):
 ```bash
-export PF_DIR=$(kpsewhich -var-value=TEXMFLOCAL)/tex/latex/pythontexfigures
-sudo mkdir -p $PF_DIR
-sudo ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
-sudo mktexlsr
+export PF_DIR=$(kpsewhich -var-value=TEXMFHOME)/tex/latex/pythontexfigures
+mkdir -p $PF_DIR
+ln -s $(pwd)/pythontexfigures/pythontexfigures.sty $PF_DIR/
 ```
 
 Use [pre-commit](https://pre-commit.com) to check and format changes before committing:
