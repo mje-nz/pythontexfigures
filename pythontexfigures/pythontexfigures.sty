@@ -27,16 +27,6 @@
 % https://tex.stackexchange.com/a/409993
 \newcommand*\pytxf@fsize{\dimexpr\f@size pt\relax}
 
-% Pass font size, text width, script path, current directory (if relative option
-% enabled), and PythonTeX output dir into scripts.
-\setpythontexcontext{%
-    fontsize=\the\pytxf@fsize,%
-    textwidth=\the\textwidth,%
-    scriptpath=\pytxf@scriptpath,%
-    currdir=\pytxf@currdir,%
-    outputdir=\pytx@outputdir%
-}
-
 % Until there's a new (> 0.16) release of PythonTeX, patch issue #65
 % https://github.com/gpoore/pythontex/issues/65
 \@ifpackagelater{pythontex}{2019/07/20}{}{%
@@ -67,11 +57,21 @@
 \DeclareUnicodeCharacter{2212}{-}
 
 
+% Pass font size, text width, script path, current directory (if relative option
+% enabled), and PythonTeX output dir into scripts.
+\setpythontexcontext{%
+    fontsize=\the\pytxf@fsize,%
+    textwidth=\the\textwidth,%
+    scriptpath=\pytxf@scriptpath,%
+    currdir=\pytxf@currdir,%
+    outputdir=\pytx@outputdir%
+}
+
 % Import Python module and set up matplotlib
 \begin{pythontexcustomcode}{py}
     import pythontexfigures
-    pythontexfigures.setup(pytex)
+    ptf = pythontexfigures.setup(pytex)
 \end{pythontexcustomcode}
 
 % Shorthand for inserting figures from Python scripts
-\newcommand*{\pyfig}[1]{\py{pythontexfigures.figure(#1)}}
+\newcommand*{\pyfig}[1]{\py{ptf.figure(#1)}}

@@ -21,31 +21,7 @@ import matplotlib.pyplot as plt  # noqa: E402 isort:skip
 from .util import section_of_file  # noqa: E402 isort:skip
 
 
-SQUARE = 1
-GOLDEN = (1.0 + math.sqrt(5.0)) / 2.0
-
-# Placeholders for setup()
-pytex = None
-FONT_SIZE = None  # type: Optional[float]
-TEXT_WIDTH = None  # type: Optional[float]
-FIGURES_DIR = None  # type: Optional[str]
-
-
-def _setup_paths():
-    """Set figure path from PythonTeX context."""
-    global FIGURES_DIR
-    # TODO: remove this global and just use a function
-    try:
-        # Put figures in PythonTeX output directory
-        FIGURES_DIR = pytex.context.outputdir
-    except AttributeError:
-        # In standalone mode, put figures in working directory
-        FIGURES_DIR = "."
-
-    assert FIGURES_DIR is not None, "No data directory defined"
-
-
-def _setup_matplotlib(font_size=None):
+def setup_matplotlib(font_size=None):
     """Set up matplotlib.
 
     Args:
@@ -77,9 +53,6 @@ def _setup_matplotlib(font_size=None):
     )
 
     # Set base font size
-    if font_size is None and FONT_SIZE is not None:
-        # Use document font size
-        font_size = FONT_SIZE
     if font_size:
         mpl.rcParams["font.size"] = font_size
 
@@ -107,111 +80,171 @@ def _setup_matplotlib(font_size=None):
     )
 
 
-def setup(pytex_):
-    """Configure matplotlib and save pytex context.
+class TexHelper:
 
-    Call this at the start of the PythonTeX custom code, **before** importing
-    matplotlib.
+    r"""Implementation for \pyfig command."""
 
-    Args:
-        pytex_ (module): The global PythonTeXUtils instance.
-    """
-    global pytex, FONT_SIZE, TEXT_WIDTH
+    SQUARE = 1
+    GOLDEN = (1.0 + math.sqrt(5.0)) / 2.0
 
-    # Save pytex reference
-    assert pytex_ is not None
-    pytex = pytex_
+    def __init__(self, pytex):
+        """Configure matplotlib and save pytex context.
 
-    # Re-run pythontex when files in this package change
-    for path in sorted(Path(__file__).parent.iterdir()):
-        if path.is_file():
-            pytex.add_dependencies(path)
+        Call this at the start of the PythonTeX custom code, **before** importing
+        matplotlib.
 
-    # Save \fsize and \textwidth as "constants"
-    FONT_SIZE = float(pytex.context.fontsize[:-2])
-    TEXT_WIDTH = pytex.pt_to_in(pytex.context.textwidth)
+        Args:
+            pytex (pythontex_utils.PythonTeXUtils): The global PythonTeXUtils instance.
+        """
+        assert pytex is not None
+        self.pytex = pytex
 
-    _setup_paths()
-    _setup_matplotlib()
+        setup_matplotlib(self.font_size)
 
+        # Re-run pythontex when files in this package change
+        for path in sorted(Path(__file__).parent.iterdir()):
+            if path.is_file():
+                pytex.add_dependencies(path)
 
-def print_preamble():
-    r"""Print the contents of pythontexfigures.sty formatted to go in the preamble.
+    @property
+    def font_size(self):
+        """The font size from the PythonTeX context, in points."""
+        return float(self.pytex.context.fontsize[:-2])
 
-    If you don't have pythontexfigures.sty in your TeX tree, you can fudge it by
-    calling this in your preamble and following with \printpythontex.
-    """
-    # Import this here so python -m pythontexfigures.sty behaves
-    from .sty import sty_file_as_string
+    @property
+    def text_width(self):
+        """The font size from the PythonTeX context, in inches."""
+        return self.pytex.pt_to_in(self.pytex.context.textwidth)
 
-    print(r"\makeatletter")
-    print(sty_file_as_string().splitlines()[2:])
-    print(r"\makeatother")
+    @property
+    def output_dir(self):
+        """The directory in which to save figures, from the PythonTeX context."""
+        return Path(self.pytex.context.outputdir)
 
+    @property
+    def script_path(self):
+        """The folder to search for figure scripts."""
+        # Value of the "scriptpath" package option
+        script_path_option = self.pytex.context.scriptpath
+        # If the "relative" package option is set, this is the absolute path of the
+        # dir containing the current TeX file, and script_path is relative to it.
+        current_file_dir = self.pytex.context.currdir
 
-def _find_script(script_name):
-    """Find a figure script by name.
+        # By default,  look for scripts relative to the current working directory
+        root = Path()
 
-    The path from pythontexfigures is used.  With package option 'relative', the path is
-    relative to the file being processed.
+        if current_file_dir:
+            # With the "relative" package option, look for scripts relative to the file
+            # being processed
+            root = Path(current_file_dir)
+            if script_path_option:
+                # Sanity check
+                assert not Path(script_path_option).is_absolute()
+        return root / script_path_option
 
-    Args:
-        script_name (str): The filename of the script, either as an absolute path or
-            relative to the script search path.
+    def _find_script(self, script_name: str):
+        """Find a figure script by name.
 
-    Returns:
-        Path: Script path.
-    """
-    script_name = Path(script_name)
-    if script_name.is_absolute():
-        assert script_name.exists()
-        return script_name
+        The path from pythontexfigures is used.  With package option 'relative', the
+        path is relative to the file being processed.
 
-    current_file_dir = pytex.context.currdir
-    script_subfolder = pytex.context.scriptpath
+        Args:
+            script_name (str): The filename of the script, either as an absolute path or
+                relative to the script search path.
 
-    if current_file_dir:
-        # With the 'relative' package option, look for scripts relative to the file
-        # being processed
-        script_dir = Path(current_file_dir)
-        if script_subfolder:
-            script_subfolder = Path(script_subfolder)
-            assert not script_subfolder.is_absolute()
-    else:
-        # Otherwise, look for scripts relative to the current working directory
-        script_dir = Path()
-    script_path = script_dir / script_subfolder / script_name
-    # print('Script path:', script_path)
-    script_path = script_path.resolve()
-    assert script_path.exists()
-    return script_path
+        Returns:
+            Path: Script path.
+        """
+        script_name = Path(script_name)
+        if script_name.is_absolute():
+            # TODO: This seems like it misses the non-relative case
+            assert script_name.exists()
+            return script_name
 
+        script_path = self.script_path / script_name
+        assert script_path.exists()
+        return script_path
 
-def _load_script(script_name):
-    """Load the main() function from the given script, such that it will run in the
-    PythonTeX session's namespace.
+    def _load_script(self, script_name):
+        """Load the main() function from the given script, such that it will run in the
+        PythonTeX session's namespace.
 
-    Args:
-        script_name (str): The filename of the script, either as an absolute path or
-            relative to the script search path.
+        Args:
+            script_name (str): The filename of the script, either as an absolute path or
+                relative to the script search path.
 
-    Returns:
-        Callable[..., str]: The main() function.
-    """
-    script_path = _find_script(script_name)
+        Returns:
+            Callable[..., str]: The main() function.
+        """
+        script_path = self._find_script(script_name)
 
-    # Copy the globals from the PythonTeX session's namespace (so imports from the setup
-    # block are present), but set __file__ and __name__ such that it looks like it's
-    # being imported normally.  Note that this will totally break if this function isn't
-    # exactly two calls down from a PythonTeX environment.
-    assert inspect.stack()[2].filename.startswith("pythontex-files-")
-    globals_ = inspect.stack()[2].frame.f_globals.copy()
-    globals_.update({"__file__": script_path, "__name__": script_name})
+        # Copy the globals from the PythonTeX session's namespace (so imports from the
+        # setup block are present), but set __file__ and __name__ such that it looks
+        # like it's being imported normally.  Note that this will totally break if this
+        # function isn't exactly two calls down from a PythonTeX environment.
+        assert inspect.stack()[2].filename.startswith("pythontex-files-")
+        globals_ = inspect.stack()[2].frame.f_globals.copy()
+        globals_.update({"__file__": script_path, "__name__": script_name})
 
-    # https://stackoverflow.com/a/41658338
-    with pytex.open(script_path, "rb") as file:
-        exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
-    return globals_["main"]
+        # https://stackoverflow.com/a/41658338
+        with self.pytex.open(script_path, "rb") as file:
+            exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
+        return globals_["main"]
+
+    def figure(self, script_name, *args, width=None, aspect=SQUARE, **kwargs):
+        r"""Insert a figure from a Python script.
+
+        The script should contain a function called `main`, which draws onto a
+        pre-configured matplotlib figure and returns a unique name (without
+        extension) for
+        the figure.  The figure will then be saved and included as a PGF in the
+        document.
+        Any setup done in the document's pythontexcustomcode environment will be
+        available.
+
+        `main` will be called with any leftover arguments to this function.  The working
+        directory will be the project directory, not the scripts directory.
+
+        By default, the figure's filename will be the script name with the figure size
+        appended.  To override this, return a string from `main`.  This is important if
+        you use a drawing function several times with different arguments in the same
+        document!
+
+        Any files read in `main` should either be opened using `pytex.open` or passed to
+        `pytex.add_dependencies` (so that pythontex re-runs the script when they
+        change),
+        and should be in `DATA_DIR` (so that latexmk triggers a build when they change).
+
+        Any files written in `main` should either be opened using `pytex.open` or passed
+        to `pytex.add_created` (so that pythontex deletes the old file when it is
+        renamed),
+        and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
+
+        Args:
+            script_name (str): The filename of the script (with or without extension),
+                either as an absolute path or relative to the scripts directory.
+            width (float): The figure width in inches (defaults to \textwidth).  For a
+                fraction of \textwidth, use the TEXT_WIDTH constant (e.g.,
+                0.5*TEXT_WIDTH).
+            aspect (float): The figure aspect ratio (SQUARE, GOLDEN, or a number).
+
+        Returns:
+            str: The LaTeX markup which includes the figure in the document.
+        """
+        if width is None:
+            width = self.text_width
+
+        if not script_name.endswith(".py"):
+            script_name += ".py"
+        main = self._load_script(script_name)
+        default_name = Path(script_name).stem
+        figure_filename = _draw_figure(
+            lambda: main(*args, **kwargs), width, aspect, output_dir=self.output_dir,
+            default_name=default_name
+        )
+
+        self.pytex.add_created(figure_filename)
+        return r"\input{%s}" % figure_filename
 
 
 def _figure_tweaks():
@@ -256,7 +289,7 @@ def _pgf_tweaks(filename):
     open(filename, "w").write(pgf_text)
 
 
-def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
+def _draw_figure(figure_func, width, aspect, output_dir=".", default_name=None, format_="pgf"):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
     given format and return the filename.
 
@@ -287,8 +320,8 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
 
     _figure_tweaks()
 
-    assert Path(FIGURES_DIR).is_dir(), "Figures dir does not exist"
-    figure_filename = Path(FIGURES_DIR) / (name + "." + format_)
+    assert Path(output_dir).is_dir(), "Output dir does not exist"
+    figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run
     plt.savefig(figure_filename, bbox_inches="tight")
     plt.close("all")
@@ -297,57 +330,6 @@ def _draw_figure(figure_func, width, aspect, default_name=None, format_="pgf"):
         _pgf_tweaks(figure_filename)
 
     return figure_filename
-
-
-def figure(script_name, *args, width=TEXT_WIDTH, aspect=SQUARE, **kwargs):
-    r"""Insert a figure from a Python script.
-
-    The script should contain a function called `main`, which draws onto a
-    pre-configured matplotlib figure and returns a unique name (without extension) for
-    the figure.  The figure will then be saved and included as a PGF in the document.
-    Any setup done in the document's pythontexcustomcode environment will be available.
-
-    `main` will be called with any leftover arguments to this function.  The working
-    directory will be the project directory, not the scripts directory.
-
-    By default, the figure's filename will be the script name with the figure size
-    appended.  To override this, return a string from `main`.  This is important if
-    you use a drawing function several times with different arguments in the same
-    document!
-
-    Any files read in `main` should either be opened using `pytex.open` or passed to
-    `pytex.add_dependencies` (so that pythontex re-runs the script when they change),
-    and should be in `DATA_DIR` (so that latexmk triggers a build when they change).
-
-    Any files written in `main` should either be opened using `pytex.open` or passed
-    to `pytex.add_created` (so that pythontex deletes the old file when it is renamed),
-    and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
-
-    Args:
-        script_name (str): The filename of the script (with or without extension),
-            either as an absolute path or relative to the scripts directory.
-        width (float): The figure width in inches (defaults to \textwidth).  For a
-            fraction of \textwidth, use the TEXT_WIDTH constant (e.g., 0.5*TEXT_WIDTH).
-        aspect (float): The figure aspect ratio (SQUARE, GOLDEN, or a number).
-
-    Returns:
-        str: The LaTeX markup which includes the figure in the document.
-    """
-    if width is None:
-        # TEXT_WIDTH is calculated when setup runs, so it doesn't actually work as a
-        # default argument
-        width = TEXT_WIDTH
-
-    if not script_name.endswith(".py"):
-        script_name += ".py"
-    main = _load_script(script_name)
-    default_name = Path(script_name).stem
-    figure_filename = _draw_figure(
-        lambda: main(*args, **kwargs), width, aspect, default_name=default_name
-    )
-
-    pytex.add_created(figure_filename)
-    return r"\input{%s}" % figure_filename
 
 
 def _run_setup_code(document_name, globals_):
@@ -403,7 +385,7 @@ def run_standalone(main):
     assert len(pytxcode_files) == 1
     _run_setup_code(pytxcode_files[0], main.__globals__)
     _setup_paths()
-    _setup_matplotlib()
+    setup_matplotlib()
 
     print("Drawing...")
     default_name = Path(main.__globals__["__file__"]).stem

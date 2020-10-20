@@ -15,5 +15,16 @@ def sty_file_as_string():
     return (Path(__file__).parent / "pythontexfigures.sty").open().read()
 
 
+def print_preamble():
+    r"""Print the contents of pythontexfigures.sty formatted to go in the preamble.
+
+    If you don't have pythontexfigures.sty in your TeX tree, you can fudge it by
+    calling this in your preamble and following with \printpythontex.
+    """
+    print(r"\makeatletter")
+    print(sty_file_as_string().splitlines()[2:])
+    print(r"\makeatother")
+
+
 if __name__ == "__main__":
     print(sty_file_as_string())

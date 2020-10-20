@@ -24,7 +24,6 @@
     import matplotlib.pyplot as plt
     import seaborn as sns
     sns.set_style("white")
-    import pythontexfigures as ptf
 \end{pythontexcustomcode}
 
 
@@ -43,10 +42,10 @@
     \begin{figure}
         \centering
         \subfloat[Test figure (golden aspect ratio).]{%
-        \pyfig{"test.py", width=0.45*ptf.TEXT_WIDTH, aspect=ptf.GOLDEN}
+        \pyfig{"test.py", width=0.45*ptf.text_width, aspect=ptf.GOLDEN}
         }
         \subfloat[Test figure (square aspect ratio).]{%
-        \pyfig{"test.py", width=0.45*ptf.TEXT_WIDTH}
+        \pyfig{"test.py", width=0.45*ptf.text_width}
         }
         \caption{Side-by-side Python figures.}
         \label{fig:test2}
