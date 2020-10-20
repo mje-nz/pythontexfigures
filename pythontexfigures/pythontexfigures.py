@@ -233,20 +233,27 @@ def _pgf_tweaks(filename):
     pgf_text = open(filename).read()
 
     # Not sure precisely what the behaviour is, but sometimes axis labels get stuck sans
-    # or sans-serif regardless of font.family.  Let's just make remove all the font
-    # family selection and match the document font.
+    # or sans-serif regardless of font.family.  Let's just remove all the font family
+    # selection and match the document font.
     # TODO: Figure out exactly what causes this and report bug
     pgf_text = pgf_text.replace(r"\rmfamily", "")
     pgf_text = pgf_text.replace(r"\sffamily", "")
 
+    # Regex which matches image commands, splitting the filename by extension
+    pattern = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)([^}]+)(\..+?})")
+
     # From https://github.com/bcbnz/matplotlib-pgfutils/blob/de2b3651cf359da2263864238f81ed3a4a860d4a/pgfutils.py#L793  # noqa: B950
     if Path(filename).parent.absolute() != Path(".").absolute():
         # If the PGF file is not in the top-level directory (which it isn't by default),
-        # fix the paths in \pgfimage commands (for rasterised plots)
+        # fix the paths in \pgfimage and \includegraphics commands (for rasterised
+        # plots).  I think matplotlib might have changed from one to the other at some
+        # points.
         prefix = str(Path(filename).parent.relative_to("."))
-        expression = re.compile(r"(\\pgfimage(?:\[.+?\])?{)(.+?)}")
-        replacement = r"\1{0}/\2}}".format(prefix)
-        pgf_text = re.sub(expression, replacement, pgf_text)
+        replacement = r"\1{0:s}/\2\3".format(prefix)
+        pgf_text = re.sub(pattern, replacement, pgf_text)
+
+    # Escape dots in image filenames
+    pgf_text = re.sub(pattern, r"\1{\2}\3", pgf_text)
 
     open(filename, "w").write(pgf_text)
 
