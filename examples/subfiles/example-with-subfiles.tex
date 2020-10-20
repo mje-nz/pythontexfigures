@@ -23,26 +23,23 @@
 \pythontexfigurespath{scripts}
 
 \begin{pythontexcustomcode}[begin]{py}
-	# Set up python_figures first so it can configure matplotlib
-	import pythontexfigures as pf
-	pf.setup(pytex)
-
-	# Set up environment for scripts
-	import numpy as np
-	import matplotlib.pyplot as plt
-	import seaborn as sns
-	sns.set_style('white')
+    # Set up environment for scripts
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("white")
+    import pythontexfigures as ptf
 \end{pythontexcustomcode}
 
 
 \begin{document}
-	\title{pythontexfigures example with subfiles}
-	\author{Matthew Edwards}
-	\date{July 2019}
-	\maketitle
+    \title{pythontexfigures example with subfiles}
+    \author{Matthew Edwards}
+    \date{July 2019}
+    \maketitle
 
-	% Each section and its figure scripts in a separate folder, like chapters in a book
-	% or thesis
+    % Each section and its figure scripts in a separate folder, like chapters in a book
+    % or thesis
     \subfile{sections/section1/section1}
     \subfile{sections/section2/section2}
 \end{document}

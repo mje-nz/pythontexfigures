@@ -19,39 +19,36 @@
 \pythontexfigurespath{scripts}
 
 \begin{pythontexcustomcode}[begin]{py}
-	# Set up python_figures first so it can configure matplotlib
-	import pythontexfigures as pf
-	pf.setup(pytex)
-
-	# Set up environment for scripts
-	import numpy as np
-	import matplotlib.pyplot as plt
-	import seaborn as sns
-	sns.set_style('white')
+    # Set up environment for scripts
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("white")
+    import pythontexfigures as ptf
 \end{pythontexcustomcode}
 
 
 \begin{document}
-	\title{Latex Python figure examples}
-	\author{Matthew Edwards}
-	\date{July 2019}
-	\maketitle
+    \title{Latex Python figure examples}
+    \author{Matthew Edwards}
+    \date{July 2019}
+    \maketitle
 
-	\begin{figure}[h]
-		\pyfig{'test.py'}
-		\caption{Test Python figure.}
-		\label{fig:test}
-	\end{figure}
+    \begin{figure}[h]
+        \pyfig{"test.py"}
+        \caption{Test Python figure.}
+        \label{fig:test}
+    \end{figure}
 
-	\begin{figure}
-		\centering
-		\subfloat[Test figure (golden aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH, aspect=pf.GOLDEN}
-		}
-		\subfloat[Test figure (square aspect ratio).]{%
-			\pyfig{'test.py', width=0.45*pf.TEXT_WIDTH}
-		}
-		\caption{Side-by-side Python figures.}
-		\label{fig:test2}
-	\end{figure}
+    \begin{figure}
+        \centering
+        \subfloat[Test figure (golden aspect ratio).]{%
+        \pyfig{"test.py", width=0.45*ptf.TEXT_WIDTH, aspect=ptf.GOLDEN}
+        }
+        \subfloat[Test figure (square aspect ratio).]{%
+        \pyfig{"test.py", width=0.45*ptf.TEXT_WIDTH}
+        }
+        \caption{Side-by-side Python figures.}
+        \label{fig:test2}
+    \end{figure}
 \end{document}
