@@ -3,6 +3,11 @@
 Author: Matthew Edwards
 Date: July 2019
 """
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style("white")
 
 
 def main(size=1000):
@@ -18,6 +23,6 @@ def main(size=1000):
 
 
 if __name__ == "__main__":
-    import pythontexfigures as pf
+    import pythontexfigures as ptf
 
-    pf.run_standalone(main)
+    ptf.run_standalone(main)

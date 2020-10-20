@@ -4,6 +4,10 @@ Author: Matthew Edwards
 Date: July 2019
 """
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style("white")
 
 
 def main(c, x=np.linspace(-5, 5, 100)):  # noqa: B008
@@ -22,6 +26,6 @@ def main(c, x=np.linspace(-5, 5, 100)):  # noqa: B008
 
 
 if __name__ == "__main__":
-    import pythontexfigures as pf
+    import pythontexfigures as ptf
 
-    pf.run_standalone(main)
+    ptf.run_standalone(main)
