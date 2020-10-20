@@ -66,5 +66,10 @@
 % Handle unicode minus character from matplotlib
 \DeclareUnicodeCharacter{2212}{-}
 
+% Import Python module for \pyfig to use
+\begin{pythontexcustomcode}{py}
+    import pythontexfigures as pf
+\end{pythontexcustomcode}
+
 % Shorthand for inserting figures from Python scripts
 \newcommand*{\pyfig}[1]{\py{pf.figure(#1)}}
