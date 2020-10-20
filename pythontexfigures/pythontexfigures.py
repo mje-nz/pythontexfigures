@@ -72,9 +72,7 @@ def _setup_matplotlib(font_size=None):
     mpl.rcParams.update(
         {
             "font.family": "serif",
-            "font.serif": [],
-            "font.sans-serif": [],
-            "font.monospace": [],
+            "pgf.rcfonts": False,
         }
     )
 
