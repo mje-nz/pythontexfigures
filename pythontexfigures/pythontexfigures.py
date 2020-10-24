@@ -166,8 +166,7 @@ class TexHelper:
         return script_path
 
     def _load_script(self, script_name):
-        """Load the main() function from the given script, such that it will run in the
-        PythonTeX session's namespace.
+        """Load the main() function from the given script.
 
         Args:
             script_name (str): The filename of the script, either as an absolute path or
@@ -178,7 +177,7 @@ class TexHelper:
         """
         script_path = self._find_script(script_name)
 
-        globals_ = {}
+        globals_ = dict(__file__=str(script_path), __name__=script_path.stem)
         # https://stackoverflow.com/a/41658338
         with self.pytex.open(script_path, "rb") as file:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
