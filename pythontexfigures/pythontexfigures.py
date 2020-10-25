@@ -56,20 +56,6 @@ def setup_matplotlib(font_size=None):
     if font_size:
         mpl.rcParams["font.size"] = font_size
 
-    # Make text a bit smaller (small is relative to font.size)
-    # TODO: Use \footnotesize
-    #       https://tex.stackexchange.com/questions/24599/what-point-pt-font-size-are-large-etc
-    mpl.rcParams.update(
-        {
-            "axes.labelsize": "small",
-            "axes.titlesize": "small",
-            "figure.titlesize": "small",
-            "legend.fontsize": "small",
-            "xtick.labelsize": "small",
-            "ytick.labelsize": "small",
-        }
-    )
-
     mpl.rcParams.update(
         {
             # Make axes border line width slightly thinner
@@ -109,7 +95,9 @@ class TexHelper:
     @property
     def font_size(self):
         """The font size from the PythonTeX context, in points."""
-        return float(self.pytex.context.fontsize[:-2])
+        # The value in the context is either a size in points, or whatever the user
+        # specified
+        return float(self.pytex.context.fontsize.strip(" pt"))
 
     @property
     def text_width(self):
@@ -162,7 +150,7 @@ class TexHelper:
             return script_name
 
         script_path = self.script_path / script_name
-        assert script_path.exists()
+        assert script_path.exists(), f"Script {script_path} not found ({script_path.resolve()})"
         return script_path
 
     def _load_script(self, script_name):

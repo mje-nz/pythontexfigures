@@ -1,13 +1,19 @@
 \ProvidesPackage{pythontexfigures}
 
-\RequirePackage{kvoptions}
+% TODO: require pythontex, pgf, and currfile-abspath?
 
+% Set up package options
+\RequirePackage{kvoptions}
 \SetupKeyvalOptions{family=pytxf,prefix=pytxf@}
 % Look for figure scripts relative to the current file, not the current working
 % directory.
 \DeclareBoolOption{relative}
+% Base matplotlib font size -- one of normalsize, small, footnotesize, scriptsize
+% (without a leading backslash!)
+\DeclareStringOption[footnotesize]{fontsize}
 \ProcessKeyvalOptions*
 
+% If the 'relative' option is specified, pass the current file's path into Python
 \ifpytxf@relative
     \RequirePackage[abspath]{currfile}
     \newcommand{\pytxf@currdir}{\currfileabsdir}
@@ -23,9 +29,25 @@
     \def\pytxf@scriptpath{}
 \fi
 
-% Get font size
-% https://tex.stackexchange.com/a/409993
-\newcommand*\pytxf@fsize{\dimexpr\f@size pt\relax}
+
+% Calculate font size string to pass into Python
+% (size saving from https://tex.stackexchange.com/a/423216 )
+\newcommand{\pytxf@setfsize}[1]{{#1\xdef\pytxf@fsize{\f@size}}}
+\RequirePackage{pdftexcmds}
+\ifnum\pdf@strcmp{\pytxf@fontsize}{normalsize}=0 %
+    \pytxf@setfsize{\normalsize}
+\fi
+\ifnum\pdf@strcmp{\pytxf@fontsize}{small}=0 %
+    \pytxf@setfsize{\small}
+\fi
+\ifnum\pdf@strcmp{\pytxf@fontsize}{footnotesize}=0 %
+    \pytxf@setfsize{\footnotesize}
+\fi
+\ifnum\pdf@strcmp{\pytxf@fontsize}{scriptsize}=0 %
+    \pytxf@setfsize{\scriptsize}
+\fi
+\@ifundefined{pytxf@fsize}{\def\pytxf@fsize{\pytxf@fontsize}}{}
+
 
 % Until there's a new (> 0.16) release of PythonTeX, patch issue #65
 % https://github.com/gpoore/pythontex/issues/65
@@ -60,7 +82,7 @@
 % Pass font size, text width, script path, current directory (if relative option
 % enabled), and PythonTeX output dir into scripts.
 \setpythontexcontext{%
-    fontsize=\the\pytxf@fsize,%
+    fontsize=\pytxf@fsize,%
     textwidth=\the\textwidth,%
     scriptpath=\pytxf@scriptpath,%
     currdir=\pytxf@currdir,%
@@ -69,8 +91,8 @@
 
 % Import Python module and set up matplotlib
 \begin{pythontexcustomcode}{py}
-    import pythontexfigures
-    ptf = pythontexfigures.setup(pytex)
+import pythontexfigures
+ptf = pythontexfigures.setup(pytex)
 \end{pythontexcustomcode}
 
 % Shorthand for inserting figures from Python scripts
