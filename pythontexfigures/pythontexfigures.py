@@ -303,7 +303,7 @@ def _draw_figure(figure_func, width, aspect=1, output_dir=".", default_name=None
     assert Path(output_dir).is_dir(), "Output dir does not exist"
     figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run
-    plt.savefig(figure_filename, bbox_inches="tight")
+    plt.savefig(figure_filename, bbox_inches="tight", pad_inches=0)
     plt.close("all")
 
     if format_ == "pgf":
