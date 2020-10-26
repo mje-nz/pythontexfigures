@@ -1,12 +1,17 @@
 \ProvidesPackage{pythontexfigures}
 
 % TODO: require pythontex, pgf, and currfile-abspath?
+%       like \@ifpackageloaded{currfile}{}{\RequirePackage{currfile}}
+
+% TODO: pass unkonwn options to pythontex
+%       like \DeclareDefaultOption{\PassOptionsToClass{\CurrentOption}{ctexbook}}
 
 % Set up package options
 \RequirePackage{kvoptions}
 \SetupKeyvalOptions{family=pytxf,prefix=pytxf@}
 % Look for figure scripts relative to the current file, not the current working
 % directory.
+% TODO: does this work with PythonTeX's workingdir and outputdir options?
 \DeclareBoolOption{relative}
 % Base matplotlib font size -- one of normalsize, small, footnotesize, scriptsize
 % (without a leading backslash!)
@@ -24,10 +29,8 @@
 % Look for figure scripts in a folder or subfolder.  If the 'relative' option is
 % specified, this must be a relative path (and will be relative to the file being
 % processed).
+\def\pytxf@scriptpath{}
 \def\pythontexfigurespath#1{\def\pytxf@scriptpath{#1}}
-\ifx \pytxf@scriptpath \@undefined
-    \def\pytxf@scriptpath{}
-\fi
 
 
 % Calculate font size string to pass into Python
