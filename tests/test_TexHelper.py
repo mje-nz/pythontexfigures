@@ -28,8 +28,16 @@ def test_parse_args_basic():
     assert kwargs == {}
 
 
-@pytest.mark.parametrize("width,expected", (
-        ("1", 1), (r"0.5\textwidth", 2.5), (r"0.75\linewidth", 1.5))
+@pytest.mark.parametrize(
+    "width,expected",
+    (
+        ("1", 1),
+        (r"0.5\textwidth", 2.5),
+        (r"0.5\textwidth{}", 2.5),
+        (r"0.5\textwidth {}", 2.5),
+        (r"0.75\linewidth", 1.5),
+        (r"0.75\linewidth{}", 1.5),
+    ),
 )
 def test_parse_width(width, expected):
     helper = TexHelper(fake_pytex())
@@ -37,9 +45,7 @@ def test_parse_width(width, expected):
     assert kwargs == dict(width=expected)
 
 
-@pytest.mark.parametrize("options,expected", (
-        ("aspect=1.5", 1.5), ("golden", 1.618)
-))
+@pytest.mark.parametrize("options,expected", (("aspect=1.5", 1.5), ("golden", 1.618)))
 def test_parse_aspect(options, expected):
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args(options)

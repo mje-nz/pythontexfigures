@@ -172,18 +172,25 @@ class TexHelper:
 
     def _parse_pyfig_args(self, args_str: str):
         r"""Parse the arguments to a \pyfig command."""
-        args_str = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
-        args_str = re.sub(r"(\d)\\textwidth", rf"\1*{self.text_width}", args_str)
-        args_str = re.sub(r"(\d)\\linewidth", rf"\1*{self.line_width}", args_str)
+        args = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
+        # Sometimes you need to use \textwidth{} instead of \textwidth to get the syntax
+        # to work in the document, and then it comes through as the number followed by a
+        # space then the braces.
+        args = re.sub(r"(\d)\\textwidth(\s*{})?", rf"\1*{self.text_width}", args)
+        args = re.sub(r"(\d)\\linewidth(\s*{})?", rf"\1*{self.line_width}", args)
         arg_evaluator = textwrap.dedent(
             f"""
             def get_args(*args, **kwargs):
                 return args, kwargs
-            args, kwargs = get_args({args_str})
+            args, kwargs = get_args({args})
         """
         )
         locals_ = {}
-        exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
+        try:
+            exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
+        except SyntaxError as e:
+            msg = f"Could not parse argument string {args_str} ({args})"
+            raise ValueError(msg) from e
         return locals_["args"], locals_["kwargs"]
 
     def _do_figure(
@@ -216,7 +223,7 @@ class TexHelper:
         to `pytex.add_created` (so that pythontex deletes the old file when it is
         renamed),
         and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
-        
+
         Returns:
             str: The LaTeX markup which includes the figure in the document.
         """
