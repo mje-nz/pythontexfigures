@@ -87,6 +87,7 @@
 \setpythontexcontext{%
     fontsize=\pytxf@fsize,%
     textwidth=\the\textwidth,%
+    linewidth=\the\linewidth,%
     scriptpath=\pytxf@scriptpath,%
     currdir=\pytxf@currdir,%
     outputdir=\pytx@outputdir%
@@ -98,5 +99,21 @@ import pythontexfigures
 ptf = pythontexfigures.setup(pytex)
 \end{pythontexcustomcode}
 
-% Shorthand for inserting figures from Python scripts
-\newcommand*{\pyfig}[1]{\centering\py{ptf.figure(#1)}}
+%\pyfig[<key val list>]{<filename>}
+% Insert a figure from a Python script.  The allowed keys are:
+%   width=<width>: a width in inches, or a multiple of \textwidth or \linewidth (default
+%       is \linewidth).
+%   height=<height>: a height in inches, or a multiple of \textwidth or \linewidth.
+%   aspect=<aspect ratio>: the figure aspect ratio (width/height), which is used to
+%       calculate the height if unspecified (default 1).
+%   golden: the same as aspect=1.618... (the golden ratio).
+% Aside from those keys, the arguments will be evaluated as a Python argument list
+% and passed to the script's main function.  Positional arguments are allowed, and must
+% be first.
+\RequirePackage{xstring}
+\newcommand*{\pyfig}[2][]{%
+    \centering%
+    % Use filename as PythonTeX session so each figure runs independently
+    \StrSubstitute{#2}{/}{-}[\pytxf@sessionname]%
+    \py[\pytxf@sessionname]{ptf.figure(r"#2", r"#1")}%
+}

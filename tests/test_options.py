@@ -18,7 +18,7 @@ DOCUMENT_TEMPLATE = r"""
 \end{document}
 """
 
-BODY = r'\pyfig{"test.py"}'
+BODY = r'\pyfig{test.py}'
 
 SCRIPT = """
 import matplotlib

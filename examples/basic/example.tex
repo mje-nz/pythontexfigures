@@ -26,7 +26,7 @@
     \maketitle
 
     \begin{figure}[h]
-        \pyfig{"test.py"}
+        \pyfig{test.py}
         \caption{Test Python figure.}
         \label{fig:test}
     \end{figure}
@@ -34,10 +34,10 @@
     \begin{figure}
         \centering
         \subfloat[Test figure (golden aspect ratio).]{%
-        \pyfig{"test.py", width=0.45*ptf.text_width, aspect=ptf.GOLDEN}
+            \pyfig[width=0.45\textwidth,golden]{test.py}
         }
         \subfloat[Test figure (square aspect ratio).]{%
-        \pyfig{"test.py", width=0.45*ptf.text_width}
+            \pyfig[width=0.45\textwidth]{test.py}
         }
         \caption{Side-by-side Python figures.}
         \label{fig:test2}

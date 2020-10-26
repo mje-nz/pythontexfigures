@@ -3,13 +3,11 @@
 Author: Matthew Edwards
 Date: July 2019
 """
-import glob
-import inspect
+import textwrap
 import math
 import re
-import textwrap
 from pathlib import Path
-from typing import Callable, Optional  # noqa: F401
+from typing import Callable, Union
 
 import matplotlib as mpl
 
@@ -17,8 +15,6 @@ import matplotlib as mpl
 # called from LaTeX
 mpl.use("pgf")
 import matplotlib.pyplot as plt  # noqa: E402 isort:skip
-
-from .util import section_of_file  # noqa: E402 isort:skip
 
 
 def setup_matplotlib(font_size=None):
@@ -36,20 +32,16 @@ def setup_matplotlib(font_size=None):
             # Use LaTeX instead of mathtext for all text rendering
             "text.usetex": True,
             # Fix input and font encoding
-            "pgf.preamble": "\n".join([
-                r"\usepackage[utf8x]{inputenc}",
-                r"\usepackage[T1]{fontenc}",
-            ]),
+            "pgf.preamble": "\n".join(
+                [r"\usepackage[utf8x]{inputenc}", r"\usepackage[T1]{fontenc}",]
+            ),
         }
     )
 
     # Use default LaTeX fonts (to match appearance for PDFs, to get correct layout for
     # PGFs)
     mpl.rcParams.update(
-        {
-            "font.family": "serif",
-            "pgf.rcfonts": False,
-        }
+        {"font.family": "serif", "pgf.rcfonts": False,}
     )
 
     # Set base font size
@@ -66,12 +58,12 @@ def setup_matplotlib(font_size=None):
     )
 
 
+GOLDEN_RATIO = (1.0 + math.sqrt(5.0)) / 2.0
+
+
 class TexHelper:
 
     r"""Implementation for \pyfig command."""
-
-    SQUARE = 1
-    GOLDEN = (1.0 + math.sqrt(5.0)) / 2.0
 
     def __init__(self, pytex):
         """Configure matplotlib and save pytex context.
@@ -101,8 +93,13 @@ class TexHelper:
 
     @property
     def text_width(self):
-        """The font size from the PythonTeX context, in inches."""
+        """The text width from the PythonTeX context, in inches."""
         return self.pytex.pt_to_in(self.pytex.context.textwidth)
+
+    @property
+    def line_width(self):
+        """The line width from the PythonTeX context, in inches."""
+        return self.pytex.pt_to_in(self.pytex.context.linewidth)
 
     @property
     def output_dir(self):
@@ -150,7 +147,9 @@ class TexHelper:
             return script_name
 
         script_path = self.script_path / script_name
-        assert script_path.exists(), f"Script {script_path} not found ({script_path.resolve()})"
+        assert (
+            script_path.exists()
+        ), f"Script {script_path} not found ({script_path.resolve()})"
         return script_path
 
     def _load_script(self, script_name):
@@ -171,60 +170,78 @@ class TexHelper:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
         return globals_["main"]
 
-    def figure(self, script_name, *args, width=None, aspect=SQUARE, **kwargs):
+    def _parse_pyfig_args(self, args_str: str):
+        r"""Parse the arguments to a \pyfig command."""
+        args_str = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
+        args_str = re.sub(r"(\d)\\textwidth", rf"\1*{self.text_width}", args_str)
+        args_str = re.sub(r"(\d)\\linewidth", rf"\1*{self.line_width}", args_str)
+        arg_evaluator = textwrap.dedent(
+            f"""
+            def get_args(*args, **kwargs):
+                return args, kwargs
+            args, kwargs = get_args({args_str})
+        """
+        )
+        locals_ = {}
+        exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
+        return locals_["args"], locals_["kwargs"]
+
+    def _do_figure(
+        self, script_name, *args, width=None, height=None, aspect=None, **kwargs
+    ):
         r"""Insert a figure from a Python script.
 
         The script should contain a function called `main`, which draws onto a
-        pre-configured matplotlib figure and returns a unique name (without
-        extension) for
-        the figure.  The figure will then be saved and included as a PGF in the
-        document.
-        Any setup done in the document's pythontexcustomcode environment will be
-        available.
+        pre-configured matplotlib figure and optionally returns a unique name (without
+        extension) for the figure.  The figure will then be saved and included as a PGF
+        in the document.
 
         `main` will be called with any leftover arguments to this function.  The working
-        directory will be the project directory, not the scripts directory.
+        directory will be the directory from which `pythontex` is called, not the
+        script's directory.
 
         By default, the figure's filename will be the script name with the figure size
         appended.  To override this, return a string from `main`.  This is important if
         you use a drawing function several times with different arguments in the same
         document!
 
+        TODO: this isn't possible any more
         Any files read in `main` should either be opened using `pytex.open` or passed to
         `pytex.add_dependencies` (so that pythontex re-runs the script when they
         change),
         and should be in `DATA_DIR` (so that latexmk triggers a build when they change).
 
+        TODO: this isn't possible any more
         Any files written in `main` should either be opened using `pytex.open` or passed
         to `pytex.add_created` (so that pythontex deletes the old file when it is
         renamed),
         and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
-
-        Args:
-            script_name (str): The filename of the script (with or without extension),
-                either as an absolute path or relative to the scripts directory.
-            width (float): The figure width in inches (defaults to \textwidth).  For a
-                fraction of \textwidth, use the TEXT_WIDTH constant (e.g.,
-                0.5*TEXT_WIDTH).
-            aspect (float): The figure aspect ratio (SQUARE, GOLDEN, or a number).
-
+        
         Returns:
             str: The LaTeX markup which includes the figure in the document.
         """
         if width is None:
-            width = self.text_width
-
+            width = self.line_width
         if not script_name.endswith(".py"):
             script_name += ".py"
+
         main = self._load_script(script_name)
-        default_name = Path(script_name).stem
         figure_filename = _draw_figure(
-            lambda: main(*args, **kwargs), width, aspect, output_dir=self.output_dir,
-            default_name=default_name
+            lambda: main(*args, **kwargs),
+            width=width,
+            height=height,
+            aspect=aspect,
+            output_dir=self.output_dir,
+            default_name=Path(script_name).stem,
         )
 
         self.pytex.add_created(figure_filename)
         return r"\input{%s}" % figure_filename
+
+    def figure(self, script_name, options):
+        r"""Perform a \pyfig command."""
+        args, kwargs = self._parse_pyfig_args(options)
+        return self._do_figure(script_name, *args, **kwargs)
 
 
 def _figure_tweaks():
@@ -251,7 +268,9 @@ def _pgf_tweaks(filename):
     pgf_text = pgf_text.replace(r"\sffamily", "")
 
     # Regex which matches image commands, splitting the filename by extension
-    pattern = re.compile(r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)([^}]+)(\..+?})")
+    pattern = re.compile(
+        r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)([^}]+)(\..+?})"
+    )
 
     # From https://github.com/bcbnz/matplotlib-pgfutils/blob/de2b3651cf359da2263864238f81ed3a4a860d4a/pgfutils.py#L793  # noqa: B950
     if Path(filename).parent.absolute() != Path(".").absolute():
@@ -269,28 +288,46 @@ def _pgf_tweaks(filename):
     open(filename, "w").write(pgf_text)
 
 
-def _draw_figure(figure_func, width, aspect=1, output_dir=".", default_name=None, format_="pgf"):
+def _draw_figure(
+    figure_func: (Callable[[], str]),
+    width: float,
+    height: float = None,
+    aspect: float = None,
+    output_dir: Union[str, Path] = ".",
+    default_name: str = None,
+    format_: str = "pgf",
+):
     """Set up a matplotlib figure, call a function to draw in it, then save it in the
-    given format and return the filename.
+    given location and format and return the filename.
 
     Args:
-        figure_func (Callable[[], str]): A function which takes no arguments, draws a
-            figure, and returns a unique name for the figure.
-        width (float): The figure width in inches.
-        aspect (float): The figure aspect ratio.
-        default_name (str): The filename to use if `figure_func` does not return one.
-        format_ (str): The file format in which to save the figure ('pdf' or 'pgf').
+        figure_func: A function which takes no arguments, draws a figure, and optionally
+            returns a unique name for the figure.
+        width: The figure width in inches.
+        height: The figure height in inches.
+        aspect: The figure aspect ratio (width/height), which is used to
+            calculate the height if unspecified (default 1).
+        output_dir: The directory in which to save the figure.
+        default_name: The filename to use if `figure_func` does not return one.
+        format_: The file format in which to save the figure ('pdf' or 'pgf').
 
     Returns:
         str: The saved figure's filename.
     """
-    figure_size = (width, width / aspect)
+    # TODO: tests for figure size
+    if aspect is None:
+        aspect = 1
+    if height is None:
+        height = width / aspect
+    figure_size = (width, height)
     plt.figure(figsize=figure_size)
 
     # TODO: Stub out plt.figure
     # Run figure function, then reset mpl.rcParams
     with mpl.rc_context():
         name = figure_func()
+    _figure_tweaks()
+
     # Generate name for figure
     # TODO: Is this a sensible way to define the filename?
     if name is None:
@@ -298,8 +335,7 @@ def _draw_figure(figure_func, width, aspect=1, output_dir=".", default_name=None
     assert name is not None
     name += "-%.2fx%.2f" % figure_size
 
-    _figure_tweaks()
-
+    # Save figure
     assert Path(output_dir).is_dir(), "Output dir does not exist"
     figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run
