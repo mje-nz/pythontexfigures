@@ -54,6 +54,8 @@ def setup_matplotlib(font_size=None):
             "axes.linewidth": 0.6,
             # Reduce legend label spacing slightly
             "legend.labelspacing": "0.3",
+            # Set default figure DPI to appropriate value for print
+            "figure.dpi": 300
         }
     )
 
