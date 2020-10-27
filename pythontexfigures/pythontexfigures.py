@@ -374,9 +374,11 @@ def run_standalone(main: Callable[[], str]):
     setup_matplotlib()
 
     print("Drawing...")
-    default_name = main.__module__  # type: ignore
+    default_name = Path(main.__globals__["__file__"]).stem  # type: ignore
     # TODO: Specify output path
     figure_filename = _draw_figure(
         main, width=4, default_name=default_name, format_="pdf"
     )
     print("Saved figure as", figure_filename)
+
+    # TODO: tests
