@@ -3,6 +3,4 @@
 from .pythontexfigures import TexHelper, run_standalone
 from .sty import print_preamble
 
-
-def setup(*args, **kwargs):
-    return TexHelper(*args, **kwargs)
+__all__ = ["TexHelper", "print_preamble", "run_standalone"]

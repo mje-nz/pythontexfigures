@@ -3,13 +3,15 @@
 Author: Matthew Edwards
 Date: July 2019
 """
-import textwrap
 import math
 import re
+import textwrap
 from pathlib import Path
-from typing import Callable, Union
+from typing import Any, Callable, Dict
 
 import matplotlib as mpl
+
+from .util import StrPath
 
 # When generating PDF figures, use PGF backend so it looks the same as it will when
 # called from LaTeX
@@ -17,11 +19,11 @@ mpl.use("pgf")
 import matplotlib.pyplot as plt  # noqa: E402 isort:skip
 
 
-def setup_matplotlib(font_size=None):
+def setup_matplotlib(font_size: float = None):
     """Set up matplotlib.
 
     Args:
-        font_size (float): Override base font size (in pt), defaults to document's font
+        font_size: Override base font size (in pt), defaults to document's font
             size (or matplotlib default in standalone mode).
     """
     # Set up PGF backend
@@ -33,16 +35,14 @@ def setup_matplotlib(font_size=None):
             "text.usetex": True,
             # Fix input and font encoding
             "pgf.preamble": "\n".join(
-                [r"\usepackage[utf8x]{inputenc}", r"\usepackage[T1]{fontenc}",]
+                [r"\usepackage[utf8x]{inputenc}", r"\usepackage[T1]{fontenc}"]
             ),
         }
     )
 
     # Use default LaTeX fonts (to match appearance for PDFs, to get correct layout for
     # PGFs)
-    mpl.rcParams.update(
-        {"font.family": "serif", "pgf.rcfonts": False,}
-    )
+    mpl.rcParams.update({"font.family": "serif", "pgf.rcfonts": False})
 
     # Set base font size
     if font_size:
@@ -55,7 +55,7 @@ def setup_matplotlib(font_size=None):
             # Reduce legend label spacing slightly
             "legend.labelspacing": "0.3",
             # Set default figure DPI to appropriate value for print
-            "figure.dpi": 300
+            "figure.dpi": 300,
         }
     )
 
@@ -64,7 +64,6 @@ GOLDEN_RATIO = (1.0 + math.sqrt(5.0)) / 2.0
 
 
 class TexHelper:
-
     r"""Implementation for \pyfig command."""
 
     def __init__(self, pytex):
@@ -129,40 +128,40 @@ class TexHelper:
                 assert not Path(script_path_option).is_absolute()
         return root / script_path_option
 
-    def _find_script(self, script_name: str):
+    def _find_script(self, script_name: StrPath):
         """Find a figure script by name.
 
         The path from pythontexfigures is used.  With package option 'relative', the
         path is relative to the file being processed.
 
         Args:
-            script_name (str): The filename of the script, either as an absolute path or
+            script_name: The filename of the script, either as an absolute path or
                 relative to the script search path.
 
         Returns:
             Path: Script path.
         """
-        script_name = Path(script_name)
-        if script_name.is_absolute():
+        script = Path(script_name)
+        if script.is_absolute():
             # TODO: This seems like it misses the non-relative case
-            assert script_name.exists()
-            return script_name
+            assert script.exists()
+            return script
 
-        script_path = self.script_path / script_name
+        script_path = self.script_path / script
         assert (
             script_path.exists()
         ), f"Script {script_path} not found ({script_path.resolve()})"
         return script_path
 
-    def _load_script(self, script_name):
+    def _load_script(self, script_name: str) -> Callable[..., str]:
         """Load the main() function from the given script.
 
         Args:
-            script_name (str): The filename of the script, either as an absolute path or
+            script_name: The filename of the script, either as an absolute path or
                 relative to the script search path.
 
         Returns:
-            Callable[..., str]: The main() function.
+            The main() function.
         """
         script_path = self._find_script(script_name)
 
@@ -187,7 +186,7 @@ class TexHelper:
             args, kwargs = get_args({args})
         """
         )
-        locals_ = {}
+        locals_: Dict[str, Any] = {}
         try:
             exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
         except SyntaxError as e:
@@ -227,7 +226,7 @@ class TexHelper:
         and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
 
         Returns:
-            str: The LaTeX markup which includes the figure in the document.
+            The LaTeX markup which includes the figure in the document.
         """
         if width is None:
             width = self.line_width
@@ -247,7 +246,7 @@ class TexHelper:
         self.pytex.add_created(figure_filename)
         return r"\input{%s}" % figure_filename
 
-    def figure(self, script_name, options):
+    def figure(self, script_name: str, options: str):
         r"""Perform a \pyfig command."""
         args, kwargs = self._parse_pyfig_args(options)
         return self._do_figure(script_name, *args, **kwargs)
@@ -255,7 +254,7 @@ class TexHelper:
 
 def _figure_tweaks():
     """Adjust figure before saving."""
-    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706  # noqa:B950
+    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706  # noqa: B950
     for axes in plt.gcf().get_axes():
         # There is no rcParam for the legend border line width, so manually adjust it
         # to match the default axes border line width
@@ -302,12 +301,14 @@ def _draw_figure(
     width: float,
     height: float = None,
     aspect: float = None,
-    output_dir: Union[str, Path] = ".",
+    output_dir: StrPath = ".",
     default_name: str = None,
     format_: str = "pgf",
 ):
-    """Set up a matplotlib figure, call a function to draw in it, then save it in the
-    given location and format and return the filename.
+    """Draw a figure, using a callback for the actual drawing.
+
+    This function sets up a matplotlib figure, calls a function to draw in it, then
+    saves it in the given location and format and returns the filename.
 
     Args:
         figure_func: A function which takes no arguments, draws a figure, and optionally
@@ -321,7 +322,7 @@ def _draw_figure(
         format_: The file format in which to save the figure ('pdf' or 'pgf').
 
     Returns:
-        str: The saved figure's filename.
+        The saved figure's filename.
     """
     # TODO: tests for figure size
     if aspect is None:
@@ -357,7 +358,7 @@ def _draw_figure(
     return figure_filename
 
 
-def run_standalone(main):
+def run_standalone(main: Callable[[], str]):
     """Turn the calling module into a standalone script which generates its figure.
 
     The setup code from the main document will be executed, but the pytex instance will
@@ -365,7 +366,7 @@ def run_standalone(main):
     as a 4x4" PDF in the current working directory.
 
     Args:
-        main (Callable[..., str]: The `main` function from a figure script.
+        main: The `main` function from a figure script.
     """
     # TODO: Command-line arguments
     # TODO: Stub pytex.open etc
@@ -373,7 +374,7 @@ def run_standalone(main):
     setup_matplotlib()
 
     print("Drawing...")
-    default_name = Path(main.__globals__["__file__"]).stem
+    default_name = main.__module__  # type: ignore
     # TODO: Specify output path
     figure_filename = _draw_figure(
         main, width=4, default_name=default_name, format_="pdf"

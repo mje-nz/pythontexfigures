@@ -1,13 +1,16 @@
 r"""Tests for handling \pyfig arguments."""
 
 
-from pythontexfigures import TexHelper
 from types import SimpleNamespace
 from unittest.mock import Mock
+
 import pytest
+
+from pythontexfigures import TexHelper
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
+    """Construct a mock PythonTeXUtils object with the given attribute in context."""
     pytex = Mock()
     pytex.context = SimpleNamespace(
         fontsize=fontsize, textwidth=textwidth, linewidth=linewidth, **context
@@ -17,11 +20,13 @@ def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
 
 
 def test_construct():
+    """Test constructing a TexHelper with a fake PythonTeXUtils instance."""
     helper = TexHelper(fake_pytex())
     assert helper
 
 
-def test_parse_args_basic():
+def test_parse_args_empty():
+    """Test parsing an empty argument string."""
     helper = TexHelper(fake_pytex())
     args, kwargs = helper._parse_pyfig_args("")
     assert args == ()
@@ -40,6 +45,7 @@ def test_parse_args_basic():
     ),
 )
 def test_parse_width(width, expected):
+    """Test parsing width arguments."""
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args(f"width={width}")
     assert kwargs == dict(width=expected)
@@ -47,12 +53,14 @@ def test_parse_width(width, expected):
 
 @pytest.mark.parametrize("options,expected", (("aspect=1.5", 1.5), ("golden", 1.618)))
 def test_parse_aspect(options, expected):
+    """Test parsing aspect ratio arguments."""
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args(options)
     assert kwargs == pytest.approx(dict(aspect=expected), abs=0.001)
 
 
 def test_parse_unexpected():
+    """Test parsing a mixture of unknown positional and keyword arguments"""
     helper = TexHelper(fake_pytex())
     args, kwargs = helper._parse_pyfig_args("1, unknown1='a'")
     assert args == (1,)
@@ -60,6 +68,7 @@ def test_parse_unexpected():
 
 
 def test_parse_tuple():
+    """Test parsing a tuple."""
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args("x=(1, 2, 3), next=4")
     assert kwargs == dict(x=(1, 2, 3), next=4)

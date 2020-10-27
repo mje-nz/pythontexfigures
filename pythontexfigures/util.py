@@ -3,20 +3,23 @@
 Author: Matthew Edwards
 Date: July 2019
 """
+import os  # noqa: F401
+from typing import List, Union
 
-from typing import Callable  # noqa: F401
+# From typeshed
+StrPath = Union[str, "os.PathLike[str]"]
 
 
-def section_of_file(filename, from_expr, to_expr):
+def section_of_file(filename: StrPath, from_expr, to_expr) -> List[str]:
     """Get the section of a file between the lines matching two expressions.
 
     Args:
-        filename (str): File to read.
+        filename: File to read.
         from_expr (Callable[[str], bool]): Function to match the starting line.
         to_expr (Callable[[str], bool]): Function to match the ending line.
 
     Returns:
-        list: The lines in between the lines matched by from_expr and to_expr.
+        The lines in between the lines matched by from_expr and to_expr.
     """
     output = []
     with open(filename) as f:

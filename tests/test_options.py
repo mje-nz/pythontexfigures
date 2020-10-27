@@ -1,9 +1,9 @@
 """Tests for pythontexfigures package options."""
-import subprocess
-import pytest
-from pathlib import Path
 import os
+import subprocess
+from pathlib import Path
 
+import pytest
 
 DOCUMENT_TEMPLATE = r"""
 \documentclass{article}
@@ -18,7 +18,7 @@ DOCUMENT_TEMPLATE = r"""
 \end{document}
 """
 
-BODY = r'\pyfig{test.py}'
+BODY = r"\pyfig{test.py}"
 
 SCRIPT = """
 import matplotlib
@@ -45,7 +45,8 @@ def in_temp_dir(tmp_path):
         os.chdir(prev_cwd)
 
 
-def build(filename):
+def build(filename: str):
+    """Use pdflatex and pythontex to build the given tex document."""
     pdflatex = ["pdflatex", "-interaction=nonstopmode", filename]
     pythontex = ["pythontex", filename]
 

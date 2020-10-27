@@ -3,14 +3,17 @@
 Author: Matthew Edwards
 Date: July 2019
 """
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 
 sns.set_style("white")
 
 
-def main(c, x=np.linspace(-5, 5, 100)):  # noqa: B008
+DEFAULT_X = np.linspace(-5, 5, 100)
+
+
+def main(c=(1, 0, 0), x=DEFAULT_X):
     """Draw a polynomial."""
     y = np.polyval(c, x)
     label = (
@@ -22,7 +25,9 @@ def main(c, x=np.linspace(-5, 5, 100)):  # noqa: B008
     plt.xlabel("$x$")
     plt.ylabel("$y$")
     plt.legend()
-    return "polynomial-" + "-".join(str(ci) for ci in c)  # Figure filename
+
+    filename = "polynomial-" + "-".join(str(ci) for ci in c)
+    return filename
 
 
 if __name__ == "__main__":

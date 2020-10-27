@@ -13,3 +13,4 @@ pythontex-files-*/
 /dist/
 
 tests/output
+.mypy_cache/

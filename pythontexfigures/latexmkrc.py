@@ -7,8 +7,9 @@ Date: July 2019
 import glob
 import sys
 from pathlib import Path
+from typing import List
 
-from .util import section_of_file
+from .util import StrPath, section_of_file
 
 
 def latexmkrc_as_string():
@@ -19,14 +20,14 @@ def latexmkrc_as_string():
     return (Path(__file__).parent / "latexmkrc").open().read()
 
 
-def dependencies_in_out_file(filename):
+def dependencies_in_out_file(filename: StrPath) -> List[str]:
     """Extract the dependency list from a PythonTeX .out file.
 
     Args:
-        filename (str): A PythonTeX .out file.
+        filename: A PythonTeX .out file.
 
     Returns:
-        list[str]: The dependencies as a list of filenames.
+        The dependencies as a list of filenames.
     """
     try:
         deps = section_of_file(
@@ -39,17 +40,17 @@ def dependencies_in_out_file(filename):
         return []
 
 
-def dependency_rules_for_folder(folder):
-    """Return latexmk dependency rules for all the PythonTeX dependencies in a
-    PythonTeX output directory.
+def dependency_rules_for_folder(folder: StrPath) -> List[str]:
+    """Construct latexmk rules for all the PythonTeX dependencies in a folder.
 
     Args:
-        folder (str): A PythonTeX output directory.
+        folder: A PythonTeX directory containing py_*.out files to get
+            dependencies from.
 
     Returns:
-        list[str]: Perl commands to add each dependency.
+        Perl commands for latexmkrc which add each dependency.
     """
-    deps = []
+    deps: List[str] = []
     for filename in glob.glob(str(Path(folder) / "*.out")):
         deps += dependencies_in_out_file(filename)
     rules = [f"rdb_ensure_file($rule, '{filename}');" for filename in set(deps)]

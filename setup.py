@@ -6,6 +6,8 @@ with open("Readme.md") as f:
     long_description = "\n".join(readme_lines[: readme_lines.index("## Development\n")])
 
 
+tests_require = ["numpy", "seaborn", "pytest"]
+
 setup(
     name="pythontexfigures",
     version="0.3.0pre",
@@ -36,5 +38,7 @@ setup(
         # For pythontex
         "pygments",
     ],
+    extras_require={"test": tests_require},
+    tests_require=tests_require,
     zip_safe=False,
 )

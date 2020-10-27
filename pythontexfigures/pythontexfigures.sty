@@ -96,7 +96,7 @@
 % Import Python module and set up matplotlib
 \begin{pythontexcustomcode}{py}
 import pythontexfigures
-ptf = pythontexfigures.setup(pytex)
+helper = pythontexfigures.TexHelper(pytex)
 \end{pythontexcustomcode}
 
 %\pyfig[<key val list>]{<filename>}
@@ -115,5 +115,5 @@ ptf = pythontexfigures.setup(pytex)
     \centering%
     % Use filename as PythonTeX session so each figure runs independently
     \StrSubstitute{#2}{/}{-}[\pytxf@sessionname]%
-    \py[\pytxf@sessionname]{ptf.figure(r"#2", r"#1")}%
+    \py[\pytxf@sessionname]{helper.figure(r"#2", r"#1")}%
 }

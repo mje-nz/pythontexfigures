@@ -8,10 +8,11 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Union  # noqa: F401
+
+from pythontexfigures.util import StrPath
 
 
-def hash_file(filename):
+def hash_file(filename: StrPath):
     """Return the SHA1 hash of the given file."""
     BUF_SIZE = 65536
     sha1 = hashlib.sha1()
@@ -24,7 +25,7 @@ def hash_file(filename):
     return sha1.hexdigest()
 
 
-def files_identical(a, b):
+def files_identical(a: StrPath, b: StrPath):
     """Return whether two files are bit-for-bit identical."""
     if os.path.getsize(a) != os.path.getsize(b):
         # Don't bother hashing them if they aren't even the same size
@@ -32,12 +33,12 @@ def files_identical(a, b):
     return hash_file(a) == hash_file(b)
 
 
-def pdf_to_images(pdf_filename, output_pattern):
+def pdf_to_images(pdf_filename: StrPath, output_pattern: StrPath):
     """Convert a PDF to a series of images (of each page) using ImageMagick.
 
     Args:
-        pdf_filename (Union[str, Path]): Filename of PDF to convert.
-        output_pattern (Union[str, Path]): Filename pattern for output images, with %d for page
+        pdf_filename: Filename of PDF to convert.
+        output_pattern: Filename pattern for output images, with %d for page
             number.
     """
     subprocess.check_call(
@@ -45,36 +46,34 @@ def pdf_to_images(pdf_filename, output_pattern):
     )
 
 
-def image_difference(a, b):
+def image_difference(a: StrPath, b: StrPath):
     """Get the RMS pixel difference between two images using ImageMagick.
 
     See https://www.imagemagick.org/Usage/compare/
 
-    Args:
-        a (Union[str, Path]): Filename of first image.
-        b (Union[str, Path]): Filename of second image.
-
     Returns:
-        float: RMS pixel error (0-1).
+        RMS pixel error (0-1).
     """
-    exit_code, output = subprocess.getstatusoutput(
-        f"compare -metric RMSE {str(a)} {str(b)} null:"
-    )
+    cmd = f"compare -metric RMSE {a} {b} null:"
+    exit_code, output = subprocess.getstatusoutput(cmd)
+    # compare returns 1 if the images are different at all
     if exit_code > 1:
-        raise subprocess.CalledProcessError(output)
+        raise subprocess.CalledProcessError(exit_code, cmd)
     absolute, normalised = output.split(" ")
     assert normalised.startswith("(")
     assert normalised.endswith(")")
     return float(normalised[1:-1])
 
 
-def assert_results_match_example(expected_path, test_dir):
+def assert_results_match_example(expected_path: StrPath, test_dir: StrPath):
     """Compare expected PDF with test results.
 
     Args:
-        expected_path (Union[str, Path]): Path to expected PDF in examples folder.
-        test_dir (Union[str, Path]): Path to test output folder.
+        expected_path: Path to expected PDF in examples folder.
+        test_dir: Path to test output folder.
     """
+    expected_path = Path(expected_path)
+    test_dir = Path(test_dir)
     output_path = test_dir / expected_path.name
     if files_identical(expected_path, output_path):
         print("Output is binary identical")
@@ -91,9 +90,9 @@ def assert_results_match_example(expected_path, test_dir):
         assert image_difference(expected_page, actual_page) == 0
 
 
-def save_output_files(test_dir, test_name):
+def save_output_files(test_dir: Path, test_name: StrPath):
     """Copy output files from failed test into main folder."""
-    out_dir = Path(__file__).parent / "output" / test_name  # type: Path
+    out_dir = Path(__file__).parent / "output" / test_name
     out_dir.mkdir(parents=True, exist_ok=True)
     print("Copying results to", out_dir)
     for f in test_dir.glob("*.pdf"):
@@ -105,7 +104,7 @@ def save_output_files(test_dir, test_name):
 def test_building_basic_example(tmpdir):
     """Build the basic example document and check the output is identical."""
     # Copy files into temp dir
-    project_dir = Path(__file__).resolve().parent.parent  # type: Path
+    project_dir = Path(__file__).resolve().parent.parent
     example_dir = project_dir / "examples" / "basic"
     tmp_dir = Path(tmpdir)
     os.mkdir(tmp_dir / "scripts")
@@ -128,7 +127,7 @@ def test_building_basic_example(tmpdir):
 
 def copy_subfiles_files(tmpdir):
     """Copy files for subfiles example document into temp dir."""
-    project_dir = Path(__file__).resolve().parent.parent  # type: Path
+    project_dir = Path(__file__).resolve().parent.parent
     example_dir = project_dir / "examples" / "subfiles"
     tmp_dir = Path(tmpdir)
     (tmp_dir / "sections" / "section1" / "scripts").mkdir(parents=True)
@@ -165,8 +164,7 @@ def test_building_subfiles_example(tmpdir):
 
 
 def test_building_subfiles_example_section1(tmpdir):
-    """Build section 1 of the  subfiles example document and check the output is
-    identical."""
+    """Test building section 1 of the subfiles example document."""
     tmp_dir = Path(tmpdir)
     example_dir = copy_subfiles_files(tmp_dir)
 
@@ -184,8 +182,7 @@ def test_building_subfiles_example_section1(tmpdir):
 
 
 def test_building_subfiles_example_section2(tmpdir):
-    """Build section 2 of the  subfiles example document and check the output is
-    identical."""
+    """Test building section 2  of the subfiles example document."""
     tmp_dir = Path(tmpdir)
     example_dir = copy_subfiles_files(tmp_dir)
 
