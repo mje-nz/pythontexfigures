@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict
 
 import matplotlib as mpl
+import seaborn as sns
 
 from .util import StrPath
 
@@ -26,6 +27,10 @@ def setup_matplotlib(font_size: float = None):
         font_size: Override base font size (in pt), defaults to document's font
             size (or matplotlib default in standalone mode).
     """
+    # Base style
+    sns.set_style("white")
+    sns.set_palette("muted", color_codes=True)
+
     # Set up PGF backend
     mpl.rcParams.update(
         {

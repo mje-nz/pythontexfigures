@@ -5,9 +5,6 @@ Date: July 2019
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-
-sns.set_style("white")
 
 
 def main(size=1000):

@@ -5,10 +5,6 @@ Date: July 2019
 """
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-
-sns.set_style("white")
-
 
 DEFAULT_X = np.linspace(-5, 5, 100)
 
