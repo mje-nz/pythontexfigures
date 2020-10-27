@@ -45,6 +45,10 @@ sudo python3 -m pythontexfigures.install TEXMFHOME
 Alternatively, call `pf.print_preamble()` in your pythontexcustomcode and follow with `\printpythontex`.
 
 
+## Troubleshooting
+If you get `! TeX capacity exceeded, sorry [main memory size=5000000].`, then you should probably rasterize your figure (as recommended at the bottom of the [matplotlib PGF tutorial](https://matplotlib.org/tutorials/text/pgf.html)).
+
+
 ## Development
 To install the Python package in editable mode:
 ```bash
@@ -75,8 +79,14 @@ Wishlist:
 * Tables
 * One session per figure
 * Coverage
+* Sort out and test non-clean builds
+* TODO: Why are the left and bottom axis border thicker?
+* TODO: convince `latexmk` that `pdflatex` should always run before `pythontex` if
+  both need to run
+
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.
 Note that PythonTeX 0.16 is quite outdated; a patch is included for one issue which is fixed upstream but not yet released.
+TODO: this isn't true any more, test 0.17.
 Inspired by [TheChymera/RepSeP](https://github.com/TheChymera/RepSeP) (but much simpler) and [this blog post by Bennett Kanuka](http://bkanuka.com/posts/native-latex-plots/) (but more automated).
 A few bits borrowed from Blair Bonnet's [matplotlib-pgfutils](https://github.com/bcbnz/matplotlib-pgfutils).
