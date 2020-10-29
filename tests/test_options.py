@@ -32,13 +32,6 @@ def document(options="", pre="", post="", body=BODY):
     return DOCUMENT_TEMPLATE % dict(options=options, pre=pre, post=post, body=body)
 
 
-@pytest.fixture
-def in_temp_dir(tmpdir):
-    """Run a test in a temporary directory."""
-    with tmpdir.as_cwd():
-        yield
-
-
 def build(filename: str):
     """Use pdflatex and pythontex to build the given tex document."""
     pdflatex = ["pdflatex", "-interaction=nonstopmode", filename]

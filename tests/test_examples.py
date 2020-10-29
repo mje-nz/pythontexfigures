@@ -9,6 +9,9 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import _pytest.fixtures  # noqa: I900
+import pytest
+
 from pythontexfigures.util import StrPath
 
 
@@ -90,9 +93,15 @@ def assert_results_match_example(expected_path: StrPath, test_dir: StrPath):
         assert image_difference(expected_page, actual_page) == 0
 
 
-def save_output_files(test_dir: Path, test_name: StrPath):
-    """Copy output files from failed test into main folder."""
-    out_dir = Path(__file__).parent / "output" / test_name
+@pytest.fixture
+def save_output_files_on_failure(request: _pytest.fixtures.FixtureRequest):
+    """Copy output files from failed tests into main folder."""
+    yield
+    if request.node.result_call.passed:
+        return
+
+    test_dir = Path()
+    out_dir = Path(__file__).parent / "output" / request.node.name.replace("/", "-")
     out_dir.mkdir(parents=True, exist_ok=True)
     print("Copying results to", out_dir)
     for f in test_dir.glob("*.pdf"):
@@ -101,99 +110,40 @@ def save_output_files(test_dir: Path, test_name: StrPath):
         shutil.copy(f, out_dir)
 
 
-def test_building_basic_example(tmpdir):
-    """Build the basic example document and check the output is identical."""
+def tree(root_dir: StrPath = "."):
+    """Print the files in the given directory and its subdirectories."""
+    for f in sorted(Path(root_dir).rglob("*")):
+        if f.is_file():
+            print(f)
+
+
+@pytest.mark.parametrize(
+    "tex_file",
+    (
+        "basic/example.tex",
+        "subfiles/example-with-subfiles.tex",
+        "subfiles/sections/section1/section1.tex",
+        "subfiles/sections/section2/section2.tex",
+    ),
+)
+def test_building_examples(tex_file, in_temp_dir, save_output_files_on_failure):
+    """Build each example document and check the output is identical."""
+    # Find example root dir
+    tex_file = Path(tex_file)
+    project_dir = Path(__file__).parent.parent
+    example_dir = project_dir / "examples" / tex_file.parts[0]
+    tex_file = tex_file.relative_to(tex_file.parts[0])
+
     # Copy files into temp dir
-    project_dir = Path(__file__).resolve().parent.parent
-    example_dir = project_dir / "examples" / "basic"
-    tmp_dir = Path(tmpdir)
-    os.mkdir(tmp_dir / "scripts")
-    for name in ["latexmkrc", "example.tex", "scripts/test.py"]:
-        shutil.copy(example_dir / name, tmp_dir / name)
+    for pattern in ("latexmkrc", "*.tex", "scripts/*.py"):
+        for filename in example_dir.rglob(pattern):
+            filename = filename.relative_to(example_dir)
+            filename.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(example_dir / filename, filename)
     print("Temp dir contents:")
-    for f in tmp_dir.iterdir():
-        print(f.relative_to(tmp_dir))
+    tree()
 
-    # Run latexmk
-    subprocess.check_call("latexmk example.tex".split(" "), cwd=tmp_dir)
-
-    # Check output matches example
-    try:
-        assert_results_match_example(example_dir / "example.pdf", tmp_dir)
-    except (subprocess.CalledProcessError, AssertionError):
-        save_output_files(tmp_dir, test_name="basic")
-        raise
-
-
-def copy_subfiles_files(tmpdir):
-    """Copy files for subfiles example document into temp dir."""
-    project_dir = Path(__file__).resolve().parent.parent
-    example_dir = project_dir / "examples" / "subfiles"
-    tmp_dir = Path(tmpdir)
-    (tmp_dir / "sections" / "section1" / "scripts").mkdir(parents=True)
-    (tmp_dir / "sections" / "section2" / "scripts").mkdir(parents=True)
-    for name in [
-        "latexmkrc",
-        "example-with-subfiles.tex",
-        "sections/section1/section1.tex",
-        "sections/section1/scripts/polynomial.py",
-        "sections/section2/section2.tex",
-        "sections/section2/scripts/sincos.py",
-    ]:
-        shutil.copy(example_dir / name, tmp_dir / name)
-    print("Temp dir contents:")
-    for f in tmp_dir.iterdir():
-        print(f.relative_to(tmp_dir))
-    return example_dir
-
-
-def test_building_subfiles_example(tmpdir):
-    """Build the subfiles example document and check the output is identical."""
-    tmp_dir = Path(tmpdir)
-    example_dir = copy_subfiles_files(tmp_dir)
-
-    # Run latexmk
-    subprocess.check_call("latexmk example-with-subfiles.tex".split(" "), cwd=tmp_dir)
-
-    # Check output matches example
-    try:
-        assert_results_match_example(example_dir / "example-with-subfiles.pdf", tmp_dir)
-    except (subprocess.CalledProcessError, AssertionError):
-        save_output_files(tmp_dir, test_name="subfiles")
-        raise
-
-
-def test_building_subfiles_example_section1(tmpdir):
-    """Test building section 1 of the subfiles example document."""
-    tmp_dir = Path(tmpdir)
-    example_dir = copy_subfiles_files(tmp_dir)
-
-    # Run latexmk
-    subprocess.check_call(
-        "latexmk sections/section1/section1.tex".split(" "), cwd=tmp_dir
-    )
-
-    # Check output matches example
-    try:
-        assert_results_match_example(example_dir / "section1.pdf", tmp_dir)
-    except (subprocess.CalledProcessError, AssertionError):
-        save_output_files(tmp_dir, test_name="subfiles-section1")
-        raise
-
-
-def test_building_subfiles_example_section2(tmpdir):
-    """Test building section 2  of the subfiles example document."""
-    tmp_dir = Path(tmpdir)
-    example_dir = copy_subfiles_files(tmp_dir)
-
-    # Run latexmk
-    subprocess.check_call(
-        "latexmk sections/section2/section2.tex".split(" "), cwd=tmp_dir
-    )
-
-    # Check output matches example
-    try:
-        assert_results_match_example(example_dir / "section2.pdf", tmp_dir)
-    except (subprocess.CalledProcessError, AssertionError):
-        save_output_files(tmp_dir, test_name="subfiles-section2")
-        raise
+    # Build and check output matches
+    subprocess.check_call(["latexmk", str(tex_file)])
+    output_filename = tex_file.stem + ".pdf"
+    assert_results_match_example(example_dir / output_filename, ".")
