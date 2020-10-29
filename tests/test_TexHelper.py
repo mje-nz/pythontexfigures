@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from pythontexfigures import TexHelper
+from pythontexfigures.pythontexfigures import TexHelper, _default_name_for_figure
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
@@ -72,3 +72,22 @@ def test_parse_tuple():
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args("x=(1, 2, 3), next=4")
     assert kwargs == dict(x=(1, 2, 3), next=4)
+
+
+@pytest.mark.parametrize(
+    "name,args,kwargs,expected",
+    (
+        ("fig", (), {}, "fig"),
+        ("fig", (1,), {"temp": True}, "fig-1-temp-True"),
+        ("fig", ([1, 2, 3],), {}, "fig-1,2,3"),
+        ("fig", ((1, 2, 3),), {}, "fig-1,2,3"),
+        ("fig", ({"a": 1, "b": 2},), {}, "fig-a1,b2"),
+        ("fig", ("test",), {}, "fig-test"),
+        ("fig", ("\n",), {}, "fig"),
+        ("fig", ("test\n",), {}, "fig-test"),
+    ),
+)
+def test_default_name(name, args, kwargs, expected):
+    """Test coming up with sensible default names for figure output files."""
+    actual = _default_name_for_figure(name, args, kwargs)
+    assert actual == expected

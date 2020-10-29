@@ -5,9 +5,10 @@ Date: July 2019
 """
 import math
 import re
+import string
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Iterable
 
 import matplotlib as mpl
 import seaborn as sns
@@ -63,6 +64,27 @@ def setup_matplotlib(font_size: float = None):
             "figure.dpi": 300,
         }
     )
+
+
+def _default_name_for_figure(script: StrPath, args: Iterable, kwargs: dict):
+    r"""Calculate the stem for a saved figure file, incorporating the arguments.
+
+    Hopefully when combined with the figure size this is be a unique name for a given
+    call to \pyfig.
+
+    Args:
+        script: Filename of figure script
+        args: Positional arguments to figure script
+        kwargs: Keyword arguments to figure script
+    """
+    name = Path(script).stem
+    parts = [str(arg) for arg in args] + [f"{k}-{v}" for k, v in kwargs.items()]
+    valid_chars = "-_.," + string.ascii_letters + string.digits
+    parts = ["".join(c for c in part if c in valid_chars) for part in parts]
+    parts = [part for part in parts if part]
+    if parts:
+        name += "-" + "-".join(parts)
+    return name
 
 
 GOLDEN_RATIO = (1.0 + math.sqrt(5.0)) / 2.0
@@ -245,7 +267,7 @@ class TexHelper:
             height=height,
             aspect=aspect,
             output_dir=self.output_dir,
-            default_name=Path(script_name).stem,
+            default_name=_default_name_for_figure(script_name, args, kwargs),
         )
 
         self.pytex.add_created(figure_filename)
@@ -337,14 +359,12 @@ def _draw_figure(
     figure_size = (width, height)
     plt.figure(figsize=figure_size)
 
-    # TODO: Stub out plt.figure
     # Run figure function, then reset mpl.rcParams
     with mpl.rc_context():
         name = figure_func()
     _figure_tweaks()
 
     # Generate name for figure
-    # TODO: Is this a sensible way to define the filename?
     if name is None:
         name = default_name
     assert name is not None
