@@ -8,11 +8,11 @@ from .util import build
 DOCUMENT_TEMPLATE = r"""
 \documentclass{article}
 \usepackage{pgf}
-\usepackage{pythontex}
+\usepackage[keeptemps=all]{pythontex}
 \usepackage{pythontexfigures}
 
 \begin{document}
-\pyfig[%(args)s]{test.py}
+\pyfig[%(args)s]{%(name)s}
 \end{document}
 """
 
@@ -22,9 +22,9 @@ def main(*args, **kwargs):
 """
 
 
-def document(args):
+def document(args="", name="test.py"):
     """Fill in LaTeX document template."""
-    return DOCUMENT_TEMPLATE % dict(args=args)
+    return DOCUMENT_TEMPLATE % dict(args=args, name=name)
 
 
 @pytest.mark.parametrize(
@@ -42,3 +42,12 @@ def test_sanitizing_arguments(in_temp_dir, args, expected):
     Path("test.py").write_text(SCRIPT)
     build("main.tex")
     assert Path("args.txt").read_text() == expected
+
+
+@pytest.mark.parametrize("name", ("'test.py'", '"test.py"'))
+def test_quoted_filename(in_temp_dir, name):
+    """Test quoted figure script filenames work."""
+    Path("main.tex").write_text(document(name=name))
+    Path("test.py").write_text(SCRIPT)
+    build("main.tex")
+    assert Path("args.txt").read_text() == "(), {}"

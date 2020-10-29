@@ -280,6 +280,9 @@ class TexHelper:
         script_name = script_name[1:-1]
         options = options[1:-1]
 
+        # Remove quotes around script name if present
+        script_name = script_name.strip("\"'")
+
         args, kwargs = self._parse_pyfig_args(options)
         return self._do_figure(script_name, *args, **kwargs)
 

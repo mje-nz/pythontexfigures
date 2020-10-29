@@ -116,6 +116,8 @@ helper = pythontexfigures.TexHelper(pytex)
     \centering%
     % Use filename as PythonTeX session so each figure runs independently
     \StrSubstitute{#2}{/}{-}[\pytxf@sessionname]%
+    \StrSubstitute{\pytxf@sessionname}{"}{}[\pytxf@sessionname]%
+    \StrSubstitute{\pytxf@sessionname}{'}{}[\pytxf@sessionname]%
     % Triple-quoted strings can contain " characters can't end with one; padding the
     % strings with another arbitrary character and removing the padding in the helper
     % makes the syntax pretty permissive.
