@@ -109,11 +109,15 @@ helper = pythontexfigures.TexHelper(pytex)
 %   golden: the same as aspect=1.618... (the golden ratio).
 % Aside from those keys, the arguments will be evaluated as a Python argument list
 % and passed to the script's main function.  Positional arguments are allowed, and must
-% be first.
+% be first.  Most Python syntax works directly.  For a dict or set literal, use \{ and
+% \}.
 \RequirePackage{xstring}
 \newcommand*{\pyfig}[2][]{%
     \centering%
     % Use filename as PythonTeX session so each figure runs independently
     \StrSubstitute{#2}{/}{-}[\pytxf@sessionname]%
-    \py[\pytxf@sessionname]{helper.figure(r"#2", r"#1")}%
+    % Triple-quoted strings can contain " characters can't end with one; padding the
+    % strings with another arbitrary character and removing the padding in the helper
+    % makes the syntax pretty permissive.
+    \py[\pytxf@sessionname]{helper.figure(r""".#2.""", r""".#1.""")}%
 }

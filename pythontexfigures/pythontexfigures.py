@@ -206,6 +206,7 @@ class TexHelper:
         # space then the braces.
         args = re.sub(r"(\d)\\textwidth(\s*{})?", rf"\1*{self.text_width}", args)
         args = re.sub(r"(\d)\\linewidth(\s*{})?", rf"\1*{self.line_width}", args)
+        args = args.replace(r"\{", "{").replace(r"\}", "}")
         arg_evaluator = textwrap.dedent(
             f"""
             def get_args(*args, **kwargs):
@@ -275,6 +276,10 @@ class TexHelper:
 
     def figure(self, script_name: str, options: str):
         r"""Perform a \pyfig command."""
+        # Remove padding (see pythontexfigures.sty)
+        script_name = script_name[1:-1]
+        options = options[1:-1]
+
         args, kwargs = self._parse_pyfig_args(options)
         return self._do_figure(script_name, *args, **kwargs)
 

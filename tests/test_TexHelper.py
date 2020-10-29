@@ -68,10 +68,18 @@ def test_parse_unexpected():
 
 
 def test_parse_tuple():
-    """Test parsing a tuple."""
+    """Test parsing a tuple literal."""
     helper = TexHelper(fake_pytex())
     _, kwargs = helper._parse_pyfig_args("x=(1, 2, 3), next=4")
     assert kwargs == dict(x=(1, 2, 3), next=4)
+
+
+def test_parse_dict():
+    """Test parsing a dict literal."""
+    helper = TexHelper(fake_pytex())
+    # Braces have to be escaped, but the backslash still come through
+    args, _ = helper._parse_pyfig_args(r"\{'a': 1\}")
+    assert args == ({"a": 1},)
 
 
 @pytest.mark.parametrize(
