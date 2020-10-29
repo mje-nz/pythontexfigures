@@ -339,6 +339,7 @@ def _draw_figure(
     output_dir: StrPath = ".",
     default_name: str = None,
     format_: str = "pgf",
+    verbose: bool = False,
 ):
     """Draw a figure, using a callback for the actual drawing.
 
@@ -355,6 +356,7 @@ def _draw_figure(
         output_dir: The directory in which to save the figure.
         default_name: The filename to use if `figure_func` does not return one.
         format_: The file format in which to save the figure ('pdf' or 'pgf').
+        verbose: Whether to print log messages to stdout.
 
     Returns:
         The saved figure's filename.
@@ -368,9 +370,10 @@ def _draw_figure(
     plt.figure(figsize=figure_size)
 
     # Run figure function, then reset mpl.rcParams
+    if verbose:
+        print("Drawing...")
     with mpl.rc_context():
         name = figure_func()
-    _figure_tweaks()
 
     # Generate name for figure
     if name is None:
@@ -379,6 +382,9 @@ def _draw_figure(
     name += "-%.2fx%.2f" % figure_size
 
     # Save figure
+    if verbose:
+        print("Saving...")
+    _figure_tweaks()
     assert Path(output_dir).is_dir(), "Output dir does not exist"
     figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run
@@ -403,14 +409,12 @@ def run_standalone(main: Callable[[], str]):
     """
     # TODO: Command-line arguments
     # TODO: Stub pytex.open etc
-    print("Setting up...")
     setup_matplotlib()
 
-    print("Drawing...")
     default_name = Path(main.__globals__["__file__"]).stem  # type: ignore
     # TODO: Specify output path
     figure_filename = _draw_figure(
-        main, width=4, default_name=default_name, format_="pdf"
+        main, width=4, default_name=default_name, format_="pdf", verbose=True
     )
     print("Saved figure as", figure_filename)
 
