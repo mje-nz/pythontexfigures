@@ -1,5 +1,4 @@
 """Tests for pythontexfigures package options."""
-import os
 import subprocess
 from pathlib import Path
 
@@ -34,15 +33,10 @@ def document(options="", pre="", post="", body=BODY):
 
 
 @pytest.fixture
-def in_temp_dir(tmp_path):
-    """Changes working directory and returns to previous on exit."""
-    # https://stackoverflow.com/a/42441759
-    prev_cwd = Path.cwd()
-    os.chdir(tmp_path)
-    try:
+def in_temp_dir(tmpdir):
+    """Run a test in a temporary directory."""
+    with tmpdir.as_cwd():
         yield
-    finally:
-        os.chdir(prev_cwd)
 
 
 def build(filename: str):
