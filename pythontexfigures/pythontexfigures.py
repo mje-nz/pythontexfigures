@@ -66,11 +66,11 @@ def setup_matplotlib(font_size: float = None):
     )
 
 
-def _default_name_for_figure(script: StrPath, args: Iterable, kwargs: dict):
+def _calculate_figure_name(script: StrPath, args: Iterable, kwargs: dict):
     r"""Calculate the stem for a saved figure file, incorporating the arguments.
 
-    Hopefully when combined with the figure size this is be a unique name for a given
-    call to \pyfig.
+    Hopefully when combined with the figure size this is unique for a given call to
+    \pyfig.
 
     Args:
         script: Filename of figure script
@@ -180,7 +180,7 @@ class TexHelper:
         ), f"Script {script_path} not found ({script_path.resolve()})"
         return script_path
 
-    def _load_script(self, script_name: str) -> Callable[..., str]:
+    def _load_script(self, script_name: str) -> Callable:
         """Load the main() function from the given script.
 
         Args:
@@ -192,7 +192,9 @@ class TexHelper:
         """
         script_path = self._find_script(script_name)
 
-        globals_ = dict(__file__=str(script_path), __name__=script_path.stem)
+        globals_: Dict[str, Any] = dict(
+            __file__=str(script_path), __name__=script_path.stem
+        )
         # https://stackoverflow.com/a/41658338
         with self.pytex.open(script_path, "rb") as file:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
@@ -212,7 +214,7 @@ class TexHelper:
             def get_args(*args, **kwargs):
                 return args, kwargs
             args, kwargs = get_args({args})
-        """
+            """
         )
         locals_: Dict[str, Any] = {}
         try:
@@ -230,16 +232,12 @@ class TexHelper:
         The script should contain a function called `main`, which draws onto a
         pre-configured matplotlib figure and optionally returns a unique name (without
         extension) for the figure.  The figure will then be saved and included as a PGF
-        in the document.
+        in the document.  The figure's filename will be the script name with the
+        arguments and figure size appended.
 
         `main` will be called with any leftover arguments to this function.  The working
         directory will be the directory from which `pythontex` is called, not the
         script's directory.
-
-        By default, the figure's filename will be the script name with the figure size
-        appended.  To override this, return a string from `main`.  This is important if
-        you use a drawing function several times with different arguments in the same
-        document!
 
         TODO: this isn't possible any more
         Any files read in `main` should either be opened using `pytex.open` or passed to
@@ -264,11 +262,11 @@ class TexHelper:
         main = self._load_script(script_name)
         figure_filename = _draw_figure(
             lambda: main(*args, **kwargs),
+            _calculate_figure_name(script_name, args, kwargs),
             width=width,
             height=height,
             aspect=aspect,
             output_dir=self.output_dir,
-            default_name=_default_name_for_figure(script_name, args, kwargs),
         )
 
         self.pytex.add_created(figure_filename)
@@ -332,12 +330,12 @@ def _pgf_tweaks(filename):
 
 
 def _draw_figure(
-    figure_func: (Callable[[], str]),
+    figure_func: Callable,
+    name: str,
     width: float,
     height: float = None,
     aspect: float = None,
     output_dir: StrPath = ".",
-    default_name: str = None,
     format_: str = "pgf",
     verbose: bool = False,
 ):
@@ -347,19 +345,18 @@ def _draw_figure(
     saves it in the given location and format and returns the filename.
 
     Args:
-        figure_func: A function which takes no arguments, draws a figure, and optionally
-            returns a unique name for the figure.
+        figure_func: A function which takes no arguments and draws a figure.
+        name: The stem for the figure filename.
         width: The figure width in inches.
         height: The figure height in inches.
         aspect: The figure aspect ratio (width/height), which is used to
             calculate the height if unspecified (default 1).
         output_dir: The directory in which to save the figure.
-        default_name: The filename to use if `figure_func` does not return one.
         format_: The file format in which to save the figure ('pdf' or 'pgf').
         verbose: Whether to print log messages to stdout.
 
     Returns:
-        The saved figure's filename.
+        The saved figure's full path.
     """
     # TODO: tests for figure size
     if aspect is None:
@@ -373,11 +370,9 @@ def _draw_figure(
     if verbose:
         print("Drawing...")
     with mpl.rc_context():
-        name = figure_func()
+        figure_func()
 
     # Generate name for figure
-    if name is None:
-        name = default_name
     assert name is not None
     name += "-%.2fx%.2f" % figure_size
 
@@ -397,7 +392,7 @@ def _draw_figure(
     return figure_filename
 
 
-def run_standalone(main: Callable[[], str]):
+def run_standalone(main: Callable):
     """Turn the calling module into a standalone script which generates its figure.
 
     The setup code from the main document will be executed, but the pytex instance will
@@ -411,11 +406,9 @@ def run_standalone(main: Callable[[], str]):
     # TODO: Stub pytex.open etc
     setup_matplotlib()
 
-    default_name = Path(main.__globals__["__file__"]).stem  # type: ignore
+    name = Path(main.__globals__["__file__"]).stem  # type: ignore
     # TODO: Specify output path
-    figure_filename = _draw_figure(
-        main, width=4, default_name=default_name, format_="pdf", verbose=True
-    )
+    figure_filename = _draw_figure(main, name, width=4, format_="pdf", verbose=True)
     print("Saved figure as", figure_filename)
 
     # TODO: tests

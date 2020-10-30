@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from pythontexfigures.pythontexfigures import TexHelper, _default_name_for_figure
+from pythontexfigures.pythontexfigures import TexHelper, _calculate_figure_name
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
@@ -97,5 +97,5 @@ def test_parse_dict():
 )
 def test_default_name(name, args, kwargs, expected):
     """Test coming up with sensible default names for figure output files."""
-    actual = _default_name_for_figure(name, args, kwargs)
+    actual = _calculate_figure_name(name, args, kwargs)
     assert actual == expected

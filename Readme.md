@@ -2,26 +2,31 @@
 
 Given a Python script like this which draws a Matplotlib figure:
 ```python
+# Test.py
+import matplotlib.pyplot as plt
+import numpy as np
+
+
 def main():
     x = np.arange(10)
-    y = x**2
+    y = x ** 2
     plt.plot(x, y)
-    plt.xlabel('$x$')
-    plt.ylabel('$x^2$')
-    return 'test'  # Figure filename
+    plt.xlabel("$x$")
+    plt.ylabel("$x^2$")
 ```
 
 you can insert it into a LaTeX document like this:
 
 ```latex
 \begin{figure}
-    \pyfig{'test.py'}
+    \pyfig{test}
     \caption{Test figure.}
 \end{figure}
 ```
 
-By default, the figure size defaults to `\textwidth` square and the font and font size match the rest of the document.
+The figure size defaults to `\linewidth` square, and the axis labels etc. use the document font with a default size of `\footnotesize`.
 
+TODO: advanced examples
 
 
 ## Installation
@@ -83,6 +88,7 @@ Wishlist:
 * TODO: Why are the left and bottom axis border thicker?
 * TODO: convince `latexmk` that `pdflatex` should always run before `pythontex` if
   both need to run
+* Sensible way of doing relative imports from inside figure scripts
 
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.

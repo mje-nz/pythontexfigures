@@ -3,27 +3,35 @@
 Author: Matthew Edwards
 Date: July 2019
 """
+from typing import Iterable, Sequence
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 DEFAULT_X = np.linspace(-5, 5, 100)
 
 
-def main(c=(1, 0, 0), x=DEFAULT_X):
-    """Draw a polynomial."""
-    y = np.polyval(c, x)
+def main(coefficients: Sequence = (1, 0, 0), x: Iterable = DEFAULT_X):
+    """Draw a polynomial.
+
+    Args:
+        coefficients: Coefficients of polynomial in descending order.
+        x: Vector of x-values at which to evaluate the polynomial (default is -5 to 5).
+    """
+    y = np.polyval(coefficients, x)
     label = (
         "$"
-        + " + ".join(f"{ci}x^{len(c) - 1 - i}" for i, ci in enumerate(c) if ci != 0)
+        + " + ".join(
+            f"{ci}x^{len(coefficients) - 1 - i}"
+            for i, ci in enumerate(coefficients)
+            if ci != 0
+        )
         + "$"
     )
     plt.plot(x, y, label=label)
     plt.xlabel("$x$")
     plt.ylabel("$y$")
     plt.legend()
-
-    filename = "polynomial-" + "-".join(str(ci) for ci in c)
-    return filename
 
 
 if __name__ == "__main__":
