@@ -1,8 +1,12 @@
 """pytest configuration file."""
+import sys
 from pathlib import Path
 
 import _pytest.reports  # noqa: I900
 import pytest
+
+# Add helpers folder to path
+sys.path.append(str(Path(__file__) / "helpers"))
 
 
 @pytest.fixture

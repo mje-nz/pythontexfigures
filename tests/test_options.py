@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from .util import build
+from util import build  # noqa: I900
 
 DOCUMENT_TEMPLATE = r"""
 \documentclass{article}
