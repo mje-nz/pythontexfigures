@@ -200,6 +200,14 @@ class TexHelper:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
         return globals_["main"]
 
+    def _replace_units(self, args: str):
+        r"""Evaluate constants in the arguments to a \pyfig command."""
+        re_pattern = r"(\d+)\s?{}(\s|,|$)"
+        units = (("pt", 1), ("in", 72.27), ("cm", 72.27 / 2.54), ("mm", 72.27 / 25.4))
+        for unit, size_in_pt in units:
+            args = re.sub(re_pattern.format(unit), rf"\1*{size_in_pt}\2", args)
+        return args
+
     def _parse_pyfig_args(self, args_str: str):
         r"""Parse the arguments to a \pyfig command."""
         args = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
@@ -209,6 +217,7 @@ class TexHelper:
         args = re.sub(r"(\d)\\textwidth(\s*{})?", rf"\1*{self.text_width}", args)
         args = re.sub(r"(\d)\\linewidth(\s*{})?", rf"\1*{self.line_width}", args)
         args = args.replace(r"\{", "{").replace(r"\}", "}")
+        args = self._replace_units(args)
         arg_evaluator = textwrap.dedent(
             f"""
             def get_args(*args, **kwargs):

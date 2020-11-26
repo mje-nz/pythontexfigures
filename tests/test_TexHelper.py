@@ -37,6 +37,10 @@ def test_parse_args_empty():
     "width,expected",
     (
         ("1", 1),
+        ("1pt", 1),
+        ("1in", 72.27),
+        ("1cm", 72.27 / 2.54),
+        ("1mm", 72.27 / 25.4),
         (r"0.5\textwidth", 2.5),
         (r"0.5\textwidth{}", 2.5),
         (r"0.5\textwidth {}", 2.5),

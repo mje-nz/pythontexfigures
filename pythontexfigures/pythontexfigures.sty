@@ -101,12 +101,13 @@ helper = pythontexfigures.TexHelper(pytex)
 
 %\pyfig[<key val list>]{<filename>}
 % Insert a figure from a Python script.  The allowed keys are:
-%   width=<width>: a width in inches, or a multiple of \textwidth or \linewidth (default
-%       is \linewidth).
-%   height=<height>: a height in inches, or a multiple of \textwidth or \linewidth.
+%   width=<width>: figure width in points.
+%   height=<height>: figure height in points.
 %   aspect=<aspect ratio>: the figure aspect ratio (width/height), which is used to
 %       calculate the height if unspecified (default 1).
 %   golden: the same as aspect=1.618... (the golden ratio).
+% Width and height can be specified with a unit (pt, in, cm or mm) e.g., width=2in, or
+% or as a multiple of \textwidth or \linewidth, e.g., width=0.9\linewidth.
 % Aside from those keys, the arguments will be evaluated as a Python argument list
 % and passed to the script's main function.  Positional arguments are allowed, and must
 % be first.  Most Python syntax works directly.  For a dict or set literal, use \{ and
