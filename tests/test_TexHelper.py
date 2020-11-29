@@ -1,20 +1,31 @@
 r"""Tests for handling \pyfig arguments."""
 
-
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
 
-from pythontexfigures.pythontexfigures import TexHelper, _calculate_figure_name
+from pythontexfigures.pythontexfigures import (
+    TexHelper,
+    _calculate_figure_name,
+    evaluate_arg_str,
+)
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
     """Construct a mock PythonTeXUtils object with the given attribute in context."""
     pytex = Mock()
     pytex.context = SimpleNamespace(
-        fontsize=fontsize, textwidth=textwidth, linewidth=linewidth, **context
+        fontsize=fontsize,
+        textwidth=textwidth,
+        linewidth=linewidth,
+        scriptpath=".",
+        currdir=".",
+        outputdir=".",
+        **context,
     )
+    pytex.open = open
     pytex.pt_to_in = lambda x: float(x)
     return pytex
 
@@ -25,10 +36,10 @@ def test_construct():
     assert helper
 
 
-def test_parse_args_empty():
-    """Test parsing an empty argument string."""
+def test_parse_options_empty():
+    """Test parsing an empty options string."""
     helper = TexHelper(fake_pytex())
-    args, kwargs = helper._parse_pyfig_args("")
+    args, kwargs = helper._parse_pyfig_options("")
     assert args == ()
     assert kwargs == {}
 
@@ -49,40 +60,37 @@ def test_parse_args_empty():
     ),
 )
 def test_parse_width(width, expected):
-    """Test parsing width arguments."""
+    """Test parsing width option."""
     helper = TexHelper(fake_pytex())
-    _, kwargs = helper._parse_pyfig_args(f"width={width}")
+    _, kwargs = helper._parse_pyfig_options(f"width={width}")
     assert kwargs == dict(width=expected)
 
 
 @pytest.mark.parametrize("options,expected", (("aspect=1.5", 1.5), ("golden", 1.618)))
 def test_parse_aspect(options, expected):
-    """Test parsing aspect ratio arguments."""
+    """Test parsing aspect ratio option."""
     helper = TexHelper(fake_pytex())
-    _, kwargs = helper._parse_pyfig_args(options)
+    _, kwargs = helper._parse_pyfig_options(options)
     assert kwargs == pytest.approx(dict(aspect=expected), abs=0.001)
 
 
 def test_parse_unexpected():
     """Test parsing a mixture of unknown positional and keyword arguments"""
-    helper = TexHelper(fake_pytex())
-    args, kwargs = helper._parse_pyfig_args("1, unknown1='a'")
+    args, kwargs = evaluate_arg_str("1, unknown1='a'")
     assert args == (1,)
     assert kwargs == dict(unknown1="a")
 
 
 def test_parse_tuple():
     """Test parsing a tuple literal."""
-    helper = TexHelper(fake_pytex())
-    _, kwargs = helper._parse_pyfig_args("x=(1, 2, 3), next=4")
+    _, kwargs = evaluate_arg_str("x=(1, 2, 3), next=4")
     assert kwargs == dict(x=(1, 2, 3), next=4)
 
 
 def test_parse_dict():
     """Test parsing a dict literal."""
-    helper = TexHelper(fake_pytex())
-    # Braces have to be escaped, but the backslash still come through
-    args, _ = helper._parse_pyfig_args(r"\{'a': 1\}")
+    # N.B. This needs extra braces when entered in TeX, but they don't come through
+    args, _ = evaluate_arg_str("{'a': 1}")
     assert args == ({"a": 1},)
 
 
@@ -103,3 +111,17 @@ def test_default_name(name, args, kwargs, expected):
     """Test coming up with sensible default names for figure output files."""
     actual = _calculate_figure_name(name, args, kwargs)
     assert actual == expected
+
+
+SCRIPT = """
+def main(*args, **kwargs):
+    open("args.txt", "w").write(f"{repr(args)}, {repr(kwargs)}")
+"""
+
+
+@pytest.mark.parametrize("options,args", (("", ""), ("", "'test'"), ("width=1", "")))
+def test_draw(in_temp_dir, options, args):
+    """Test a simple figure drawing scenario without all the LaTeX."""
+    Path("test.py").write_text(SCRIPT)
+    helper = TexHelper(fake_pytex())
+    helper.figure(".test.py.", f".{options}.", f".{args}.")

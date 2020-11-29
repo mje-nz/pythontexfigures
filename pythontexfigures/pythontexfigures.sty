@@ -99,28 +99,33 @@ import pythontexfigures
 helper = pythontexfigures.TexHelper(pytex)
 \end{pythontexcustomcode}
 
-%\pyfig[<key val list>]{<filename>}
-% Insert a figure from a Python script.  The allowed keys are:
+
+%\pyfig[<options>]{<filename>}[<arguments>]
+% Insert a figure from a Python script.  Options and arguments are both optional.
+%
+% The options are a comma-separated list of values or key=value pairs, which can
+% include:
 %   width=<width>: figure width in points.
 %   height=<height>: figure height in points.
-%   aspect=<aspect ratio>: the figure aspect ratio (width/height), which is used to
+%   aspect=<aspect ratio>: figure aspect ratio (width/height), which is used to
 %       calculate the height if unspecified (default 1).
 %   golden: the same as aspect=1.618... (the golden ratio).
-% Width and height can be specified with a unit (pt, in, cm or mm) e.g., width=2in, or
-% or as a multiple of \textwidth or \linewidth, e.g., width=0.9\linewidth.
-% Aside from those keys, the arguments will be evaluated as a Python argument list
-% and passed to the script's main function.  Positional arguments are allowed, and must
-% be first.  Most Python syntax works directly.  For a dict or set literal, use \{ and
-% \}.
-\RequirePackage{xstring}
-\newcommand*{\pyfig}[2][]{%
+% Width and height can also be specified with a unit (pt, in, cm or mm) e.g., width=2in,
+% or as a multiple of \textwidth or \linewidth, e.g., width=0.9\linewidth.  Width and
+% height can be specified without keys, e.g., 0.5,0.5.
+%
+% The arguments are evaluated as a Python argument list and passed to the script's main
+% function.  Most Python syntax works directly; if you need to include braces ({ and })
+% then surround the argument list with another set of braces.
+\RequirePackage{xparse}
+\NewDocumentCommand{\pyfig}{O{} m O{}}{%
     \centering%
     % Use filename as PythonTeX session so each figure runs independently
     \StrSubstitute{#2}{/}{-}[\pytxf@sessionname]%
     \StrSubstitute{\pytxf@sessionname}{"}{}[\pytxf@sessionname]%
     \StrSubstitute{\pytxf@sessionname}{'}{}[\pytxf@sessionname]%
-    % Triple-quoted strings can contain " characters can't end with one; padding the
+    % Triple-quoted strings can contain " characters but can't end with one; padding the
     % strings with another arbitrary character and removing the padding in the helper
     % makes the syntax pretty permissive.
-    \py[\pytxf@sessionname]{helper.figure(r""".#2.""", r""".#1.""")}%
+    \py[\pytxf@sessionname]{helper.figure(r""".#2.""", r""".#1.""", r""".#3.""")}%
 }

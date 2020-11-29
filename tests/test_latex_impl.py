@@ -12,7 +12,7 @@ DOCUMENT_TEMPLATE = r"""
 \usepackage{pythontexfigures}
 
 \begin{document}
-\pyfig[%(args)s]{%(name)s}
+\pyfig[%(options)s]{%(name)s}[%(args)s]
 \end{document}
 """
 
@@ -22,9 +22,9 @@ def main(*args, **kwargs):
 """
 
 
-def document(args="", name="test.py"):
+def document(args="", name="test.py", options=""):
     """Fill in LaTeX document template."""
-    return DOCUMENT_TEMPLATE % dict(args=args, name=name)
+    return DOCUMENT_TEMPLATE % dict(args=args, name=name, options=options)
 
 
 @pytest.mark.parametrize(
@@ -32,7 +32,10 @@ def document(args="", name="test.py"):
     (
         ("'test'", "('test',), {}"),
         ('"test"', "('test',), {}"),
-        (r"\{'a': 1\}", "({'a': 1},), {}"),
+        ("{{'a': 1}}", "({'a': 1},), {}"),
+        ("{'a': 1},test=True", "({'a': 1},), {'test': True}"),
+        ("{'a': 1}, test=True", "({'a': 1},), {'test': True}"),
+        ("{{'a': 1},test=True}", "({'a': 1},), {'test': True}"),
         ("(1, 2, 3)", "((1, 2, 3),), {}"),
     ),
 )

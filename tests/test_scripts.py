@@ -3,8 +3,8 @@
 Author: Matthew Edwards
 Date: July 2019
 """
-
 import subprocess
+from pathlib import Path
 
 
 def test_install():
@@ -17,5 +17,6 @@ def test_install():
 def test_sty():
     """Check pythontexfigures.sty prints the LaTeX package."""
     output = subprocess.check_output("python3 -m pythontexfigures.sty".split(" "))
-    expected = open("pythontexfigures/pythontexfigures.sty", "rb").read()
+    main_dir = Path(__file__).parent.parent
+    expected = open(main_dir / "pythontexfigures/pythontexfigures.sty", "rb").read()
     assert output.strip() == expected.strip()

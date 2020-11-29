@@ -87,6 +87,33 @@ def _calculate_figure_name(script: StrPath, args: Iterable, kwargs: dict):
     return name
 
 
+def _replace_units(args: str):
+    r"""Evaluate constants in the arguments to a \pyfig command."""
+    re_pattern = r"(\d+)\s?{}(\s|,|$)"
+    units = (("pt", 1), ("in", 72.27), ("cm", 72.27 / 2.54), ("mm", 72.27 / 25.4))
+    for unit, size_in_pt in units:
+        args = re.sub(re_pattern.format(unit), rf"\1*{size_in_pt}\2", args)
+    return args
+
+
+def evaluate_arg_str(args: str):
+    """Evaluate a Python argument string into an args tuple and kwargs dict."""
+    arg_evaluator = textwrap.dedent(
+        f"""
+        def get_args(*args, **kwargs):
+            return args, kwargs
+        args, kwargs = get_args({args})
+        """
+    )
+    locals_: Dict[str, Any] = {}
+    try:
+        exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
+    except SyntaxError as e:
+        msg = f"Could not parse argument string {args}"
+        raise ValueError(msg) from e
+    return locals_["args"], locals_["kwargs"]
+
+
 GOLDEN_RATIO = (1.0 + math.sqrt(5.0)) / 2.0
 
 
@@ -200,98 +227,112 @@ class TexHelper:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
         return globals_["main"]
 
-    def _replace_units(self, args: str):
-        r"""Evaluate constants in the arguments to a \pyfig command."""
-        re_pattern = r"(\d+)\s?{}(\s|,|$)"
-        units = (("pt", 1), ("in", 72.27), ("cm", 72.27 / 2.54), ("mm", 72.27 / 25.4))
-        for unit, size_in_pt in units:
-            args = re.sub(re_pattern.format(unit), rf"\1*{size_in_pt}\2", args)
-        return args
+    def _parse_pyfig_options(self, args_str: str):
+        r"""Parse the options for a \pyfig command.
 
-    def _parse_pyfig_args(self, args_str: str):
-        r"""Parse the arguments to a \pyfig command."""
+        Returns:
+            args, kwargs
+        """
         args = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
         # Sometimes you need to use \textwidth{} instead of \textwidth to get the syntax
-        # to work in the document, and then it comes through as the number followed by a
-        # space then the braces.
+        # to work in the document, and then it comes through as the command followed by
+        # a space then the braces.
+        # TODO: is this still true with xparse?
         args = re.sub(r"(\d)\\textwidth(\s*{})?", rf"\1*{self.text_width}", args)
         args = re.sub(r"(\d)\\linewidth(\s*{})?", rf"\1*{self.line_width}", args)
         args = args.replace(r"\{", "{").replace(r"\}", "}")
-        args = self._replace_units(args)
-        arg_evaluator = textwrap.dedent(
-            f"""
-            def get_args(*args, **kwargs):
-                return args, kwargs
-            args, kwargs = get_args({args})
-            """
-        )
-        locals_: Dict[str, Any] = {}
+        args = _replace_units(args)
         try:
-            exec(compile(arg_evaluator, filename="<options>", mode="exec"), locals_)
-        except SyntaxError as e:
-            msg = f"Could not parse argument string {args_str} ({args})"
-            raise ValueError(msg) from e
-        return locals_["args"], locals_["kwargs"]
+            return evaluate_arg_str(args)
+        except ValueError as e:
+            # Add original argument string to message
+            raise ValueError(str(e) + f" ({args_str})")
 
-    def _do_figure(
-        self, script_name, *args, width=None, height=None, aspect=None, **kwargs
+    def figure(self, script_name: str, figure_options: str, script_args: str):
+        r"""Perform a \pyfig command."""
+        # Remove padding (see pythontexfigures.sty)
+        script_name = script_name[1:-1]
+        figure_options = figure_options[1:-1]
+        script_args = script_args[1:-1]
+
+        # Remove quotes around script name if present
+        script_name = script_name.strip("\"'")
+
+        if not script_name.endswith(".py"):
+            script_name += ".py"
+
+        args, kwargs = self._parse_pyfig_options(figure_options)
+        context = FigureContext(self, script_name, *args, **kwargs)
+
+        args, kwargs = evaluate_arg_str(script_args)
+        return context.draw(*args, **kwargs)
+
+
+class FigureContext:
+    """Drawing context for an individual figure."""
+
+    def __init__(
+        self,
+        helper: TexHelper,
+        script_name: str,
+        width: float = None,
+        height: float = None,
+        aspect: float = None,
     ):
+        self.helper = helper
+        self.script_name = script_name
+        self.width = width or self.helper.line_width
+        self.height = height
+        self.aspect = aspect
+
+    def draw(self, *args, **kwargs):
         r"""Insert a figure from a Python script.
 
         The script should contain a function called `main`, which draws onto a
-        pre-configured matplotlib figure and optionally returns a unique name (without
-        extension) for the figure.  The figure will then be saved and included as a PGF
+        pre-configured matplotlib figure and optionally returns a unique name
+        (without
+        extension) for the figure.  The figure will then be saved and
+        included as a PGF
         in the document.  The figure's filename will be the script name with the
         arguments and figure size appended.
 
-        `main` will be called with any leftover arguments to this function.  The working
-        directory will be the directory from which `pythontex` is called, not the
+        `main` will be called with any leftover arguments to this function.
+        The working
+        directory will be the directory from which `pythontex` is called,
+        not the
         script's directory.
 
         TODO: this isn't possible any more
-        Any files read in `main` should either be opened using `pytex.open` or passed to
+        Any files read in `main` should either be opened using `pytex.open`
+        or passed to
         `pytex.add_dependencies` (so that pythontex re-runs the script when they
         change),
-        and should be in `DATA_DIR` (so that latexmk triggers a build when they change).
+        and should be in `DATA_DIR` (so that latexmk triggers a build when
+        they change).
 
         TODO: this isn't possible any more
-        Any files written in `main` should either be opened using `pytex.open` or passed
-        to `pytex.add_created` (so that pythontex deletes the old file when it is
+        Any files written in `main` should either be opened using
+        `pytex.open` or passed
+        to `pytex.add_created` (so that pythontex deletes the old file when
+        it is
         renamed),
         and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
 
         Returns:
             The LaTeX markup which includes the figure in the document.
         """
-        if width is None:
-            width = self.line_width
-        if not script_name.endswith(".py"):
-            script_name += ".py"
-
-        main = self._load_script(script_name)
+        main = self.helper._load_script(self.script_name)
         figure_filename = _draw_figure(
             lambda: main(*args, **kwargs),
-            _calculate_figure_name(script_name, args, kwargs),
-            width=width,
-            height=height,
-            aspect=aspect,
-            output_dir=self.output_dir,
+            _calculate_figure_name(self.script_name, args, kwargs),
+            width=self.width,
+            height=self.height,
+            aspect=self.aspect,
+            output_dir=self.helper.output_dir,
         )
 
-        self.pytex.add_created(figure_filename)
+        self.helper.pytex.add_created(figure_filename)
         return r"\input{%s}" % figure_filename
-
-    def figure(self, script_name: str, options: str):
-        r"""Perform a \pyfig command."""
-        # Remove padding (see pythontexfigures.sty)
-        script_name = script_name[1:-1]
-        options = options[1:-1]
-
-        # Remove quotes around script name if present
-        script_name = script_name.strip("\"'")
-
-        args, kwargs = self._parse_pyfig_args(options)
-        return self._do_figure(script_name, *args, **kwargs)
 
 
 def _figure_tweaks():
