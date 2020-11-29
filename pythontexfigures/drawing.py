@@ -1,7 +1,7 @@
 """Drawing routines, which don't interact with PythonTeX at all."""
 import re
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 import matplotlib as mpl
 import seaborn as sns
@@ -110,7 +110,7 @@ def draw_figure(
     width: float,
     height: float = None,
     aspect: float = None,
-    output_dir: StrPath = ".",
+    output_dir: Optional[StrPath] = None,
     format_: str = "pgf",
     verbose: bool = False,
 ):
@@ -155,6 +155,8 @@ def draw_figure(
     if verbose:
         print("Saving...")
     _figure_tweaks()
+    if output_dir is None:
+        output_dir = "."
     assert Path(output_dir).is_dir(), "Output dir does not exist"
     figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run

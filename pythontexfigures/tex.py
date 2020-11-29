@@ -1,10 +1,30 @@
-"""PythonTeX interface code."""
+"""PythonTeX interface code.
+
+Figure scripts should contain a function called `main`, which draws onto a
+pre-configured matplotlib figure and optionally returns a unique name (without
+extension) for the figure.  The working directory will be the directory from which
+`pythontex` is called, not the script's directory.  The figure will then be saved and
+included as a PGF in the LaTeX document.  The figure's filename will be the script name
+with the arguments and figure size appended.
+
+TODO: this isn't possible any more
+Any files read in `main` should either be opened using `pytex.open` or passed to
+`pytex.add_dependencies` (so that pythontex re-runs the script when they change), and
+should be in `DATA_DIR` (so that latexmk triggers a build when they change).
+
+TODO: this isn't possible any more
+Any files written in `main` should either be opened using `pytex.open` or passed to
+`pytex.add_created` (so that pythontex deletes the old file when it is renamed), and
+should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
+"""
 import math
 import re
 import string
 import textwrap
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Iterable, Optional
+
+from attr import attrs
 
 from .drawing import draw_figure, setup_matplotlib
 from .util import StrPath
@@ -209,82 +229,61 @@ class TexHelper:
         context = FigureContext(self, script_name, *args, **kwargs)
 
         args, kwargs = evaluate_arg_str(script_args)
-        return context.draw(*args, **kwargs)
+        return context.draw_and_include(*args, **kwargs)
 
 
+@attrs(auto_attribs=True)
 class FigureContext:
     """Drawing context for an individual figure."""
 
-    def __init__(
-        self,
-        helper: TexHelper,
-        script_name: str,
-        width: float = None,
-        height: float = None,
-        aspect: float = None,
-    ):
-        self.helper = helper
-        self.script_name = script_name
-        self.width = width or self.helper.line_width
-        self.height = height
-        self.aspect = aspect
+    helper: Optional[TexHelper]
+    script_name: str
+    width: Optional[float] = None
+    height: Optional[float] = None
+    aspect: Optional[float] = None
+
+    # These are for run_standalone
+    # TODO: support pdf figures through pyfig
+    format_: str = "pgf"
+    verbose: bool = False
+    figure_func: Optional[Callable] = None
+    output_dir: Optional[str] = None
+
+    def __attrs_post_init__(self):
+        """Fill in missing arguments from helper."""
+        if self.width is None:
+            self.width = self.helper.line_width
+        if self.figure_func is None:
+            self.figure_func = self.helper._load_script(self.script_name)
+        if self.output_dir is None and self.helper is not None:
+            self.output_dir = self.helper.output_dir
 
     def draw(self, *args, **kwargs):
-        r"""Insert a figure from a Python script.
-
-        The script should contain a function called `main`, which draws onto a
-        pre-configured matplotlib figure and optionally returns a unique name
-        (without
-        extension) for the figure.  The figure will then be saved and
-        included as a PGF
-        in the document.  The figure's filename will be the script name with the
-        arguments and figure size appended.
-
-        `main` will be called with any leftover arguments to this function.
-        The working
-        directory will be the directory from which `pythontex` is called,
-        not the
-        script's directory.
-
-        TODO: this isn't possible any more
-        Any files read in `main` should either be opened using `pytex.open`
-        or passed to
-        `pytex.add_dependencies` (so that pythontex re-runs the script when they
-        change),
-        and should be in `DATA_DIR` (so that latexmk triggers a build when
-        they change).
-
-        TODO: this isn't possible any more
-        Any files written in `main` should either be opened using
-        `pytex.open` or passed
-        to `pytex.add_created` (so that pythontex deletes the old file when
-        it is
-        renamed),
-        and should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
-
-        Returns:
-            The LaTeX markup which includes the figure in the document.
-        """
-        main = self.helper._load_script(self.script_name)
+        """Draw the figure and return the filename."""
         figure_filename = draw_figure(
-            lambda: main(*args, **kwargs),
+            lambda: self.figure_func(*args, **kwargs),
             _calculate_figure_name(self.script_name, args, kwargs),
             width=self.width,
             height=self.height,
             aspect=self.aspect,
-            output_dir=self.helper.output_dir,
+            output_dir=self.output_dir,
         )
 
-        self.helper.pytex.add_created(figure_filename)
+        if self.helper:
+            self.helper.pytex.add_created(figure_filename)
+        return figure_filename
+
+    def draw_and_include(self, *args, **kwargs):
+        """Draw the figure and return the LaTeX code to include it."""
+        figure_filename = self.draw(*args, **kwargs)
+        assert self.format_ == "pgf"
         return r"\input{%s}" % figure_filename
 
 
 def run_standalone(main: Callable):
     """Turn the calling module into a standalone script which generates its figure.
 
-    The setup code from the main document will be executed, but the pytex instance will
-    not be available (so `pytex.open` etc will not work).  The figure will be generated
-    as a 4x4" PDF in the current working directory.
+    The figure will be generated as a 4x4" PDF in the current working directory.
 
     Args:
         main: The `main` function from a figure script.
@@ -293,9 +292,13 @@ def run_standalone(main: Callable):
     # TODO: Stub pytex.open etc
     setup_matplotlib()
 
-    name = Path(main.__globals__["__file__"]).stem  # type: ignore
+    helper = None
+    name = main.__globals__["__file__"]  # type: ignore
+    ctx = FigureContext(
+        helper, name, width=4, format_="pdf", verbose=True, figure_func=main
+    )
     # TODO: Specify output path
-    figure_filename = draw_figure(main, name, width=4, format_="pdf", verbose=True)
+    figure_filename = ctx.draw()
     print("Saved figure as", figure_filename)
 
     # TODO: tests

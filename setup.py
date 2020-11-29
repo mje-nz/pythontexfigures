@@ -6,7 +6,7 @@ with open("Readme.md") as f:
     long_description = "\n".join(readme_lines[: readme_lines.index("## Development\n")])
 
 
-tests_require = ["numpy", "seaborn", "pytest"]
+tests_require = ["attrs", "numpy", "seaborn", "pytest"]
 
 setup(
     name="pythontexfigures",
