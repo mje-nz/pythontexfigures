@@ -6,11 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from pythontexfigures.pythontexfigures import (
-    TexHelper,
-    _calculate_figure_name,
-    evaluate_arg_str,
-)
+from pythontexfigures.tex import TexHelper, _calculate_figure_name, evaluate_arg_str
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):

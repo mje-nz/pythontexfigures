@@ -1,8 +1,4 @@
-"""PythonTeX figure helpers.
-
-Author: Matthew Edwards
-Date: July 2019
-"""
+"""PythonTeX interface code."""
 import math
 import re
 import string
@@ -10,60 +6,8 @@ import textwrap
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable
 
-import matplotlib as mpl
-import seaborn as sns
-
+from .drawing import draw_figure, setup_matplotlib
 from .util import StrPath
-
-# When generating PDF figures, use PGF backend so it looks the same as it will when
-# called from LaTeX
-mpl.use("pgf")
-import matplotlib.pyplot as plt  # noqa: E402 isort:skip
-
-
-def setup_matplotlib(font_size: float = None):
-    """Set up matplotlib.
-
-    Args:
-        font_size: Override base font size (in pt), defaults to document's font
-            size (or matplotlib default in standalone mode).
-    """
-    # Base style
-    sns.set_style("white")
-    sns.set_palette("muted", color_codes=True)
-
-    # Set up PGF backend
-    mpl.rcParams.update(
-        {
-            # Use pdflatex instead of xelatex
-            "pgf.texsystem": "pdflatex",
-            # Use LaTeX instead of mathtext for all text rendering
-            "text.usetex": True,
-            # Fix input and font encoding
-            "pgf.preamble": "\n".join(
-                [r"\usepackage[utf8x]{inputenc}", r"\usepackage[T1]{fontenc}"]
-            ),
-        }
-    )
-
-    # Use default LaTeX fonts (to match appearance for PDFs, to get correct layout for
-    # PGFs)
-    mpl.rcParams.update({"font.family": "serif", "pgf.rcfonts": False})
-
-    # Set base font size
-    if font_size:
-        mpl.rcParams["font.size"] = font_size
-
-    mpl.rcParams.update(
-        {
-            # Make axes border line width slightly thinner
-            "axes.linewidth": 0.6,
-            # Reduce legend label spacing slightly
-            "legend.labelspacing": "0.3",
-            # Set default figure DPI to appropriate value for print
-            "figure.dpi": 300,
-        }
-    )
 
 
 def _calculate_figure_name(script: StrPath, args: Iterable, kwargs: dict):
@@ -322,7 +266,7 @@ class FigureContext:
             The LaTeX markup which includes the figure in the document.
         """
         main = self.helper._load_script(self.script_name)
-        figure_filename = _draw_figure(
+        figure_filename = draw_figure(
             lambda: main(*args, **kwargs),
             _calculate_figure_name(self.script_name, args, kwargs),
             width=self.width,
@@ -333,113 +277,6 @@ class FigureContext:
 
         self.helper.pytex.add_created(figure_filename)
         return r"\input{%s}" % figure_filename
-
-
-def _figure_tweaks():
-    """Adjust figure before saving."""
-    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/ddd71596659718a8b55ca511a112df5ea1b5d7a8/pgfutils.py#L706  # noqa: B950
-    for axes in plt.gcf().get_axes():
-        # There is no rcParam for the legend border line width, so manually adjust it
-        # to match the default axes border line width
-        legend = axes.get_legend()
-        if legend:
-            frame = legend.get_frame()
-            frame.set_linewidth(mpl.rcParams["axes.linewidth"])
-
-
-def _pgf_tweaks(filename):
-    """Adjust PGF file after saving."""
-    pgf_text = open(filename).read()
-
-    # Not sure precisely what the behaviour is, but sometimes axis labels get stuck sans
-    # or sans-serif regardless of font.family.  Let's just remove all the font family
-    # selection and match the document font.
-    # TODO: Figure out exactly what causes this and report bug
-    pgf_text = pgf_text.replace(r"\rmfamily", "")
-    pgf_text = pgf_text.replace(r"\sffamily", "")
-
-    # Regex which matches image commands, splitting the filename by extension
-    pattern = re.compile(
-        r"(\\(?:pgfimage|includegraphics)(?:\[.+?\])?{)([^}]+)(\..+?})"
-    )
-
-    # From https://github.com/bcbnz/matplotlib-pgfutils/blob/de2b3651cf359da2263864238f81ed3a4a860d4a/pgfutils.py#L793  # noqa: B950
-    if Path(filename).parent.absolute() != Path(".").absolute():
-        # If the PGF file is not in the top-level directory (which it isn't by default),
-        # fix the paths in \pgfimage and \includegraphics commands (for rasterised
-        # plots).  I think matplotlib might have changed from one to the other at some
-        # points.
-        prefix = str(Path(filename).parent.relative_to("."))
-        replacement = r"\1{0:s}/\2\3".format(prefix)
-        pgf_text = re.sub(pattern, replacement, pgf_text)
-
-    # Escape dots in image filenames
-    pgf_text = re.sub(pattern, r"\1{\2}\3", pgf_text)
-
-    open(filename, "w").write(pgf_text)
-
-
-def _draw_figure(
-    figure_func: Callable,
-    name: str,
-    width: float,
-    height: float = None,
-    aspect: float = None,
-    output_dir: StrPath = ".",
-    format_: str = "pgf",
-    verbose: bool = False,
-):
-    """Draw a figure, using a callback for the actual drawing.
-
-    This function sets up a matplotlib figure, calls a function to draw in it, then
-    saves it in the given location and format and returns the filename.
-
-    Args:
-        figure_func: A function which takes no arguments and draws a figure.
-        name: The stem for the figure filename.
-        width: The figure width in inches.
-        height: The figure height in inches.
-        aspect: The figure aspect ratio (width/height), which is used to
-            calculate the height if unspecified (default 1).
-        output_dir: The directory in which to save the figure.
-        format_: The file format in which to save the figure ('pdf' or 'pgf').
-        verbose: Whether to print log messages to stdout.
-
-    Returns:
-        The saved figure's full path.
-    """
-    # TODO: tests for figure size
-    if aspect is None:
-        aspect = 1
-    if height is None:
-        height = width / aspect
-    figure_size = (width, height)
-    plt.figure(figsize=figure_size)
-
-    # Run figure function, then reset mpl.rcParams
-    if verbose:
-        print("Drawing...")
-    with mpl.rc_context():
-        figure_func()
-
-    # Generate name for figure
-    assert name is not None
-    name += "-%.2fx%.2f" % figure_size
-
-    # Save figure
-    if verbose:
-        print("Saving...")
-    _figure_tweaks()
-    assert Path(output_dir).is_dir(), "Output dir does not exist"
-    figure_filename = Path(output_dir) / (name + "." + format_)
-    # TODO: Check if already created this run
-    plt.savefig(figure_filename, bbox_inches="tight", pad_inches=0)
-    plt.close("all")
-
-    if format_ == "pgf":
-        _pgf_tweaks(figure_filename)
-
-    return figure_filename
 
 
 def run_standalone(main: Callable):
@@ -458,7 +295,7 @@ def run_standalone(main: Callable):
 
     name = Path(main.__globals__["__file__"]).stem  # type: ignore
     # TODO: Specify output path
-    figure_filename = _draw_figure(main, name, width=4, format_="pdf", verbose=True)
+    figure_filename = draw_figure(main, name, width=4, format_="pdf", verbose=True)
     print("Saved figure as", figure_filename)
 
     # TODO: tests
