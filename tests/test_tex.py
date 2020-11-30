@@ -38,16 +38,6 @@ def test_construct():
     assert helper
 
 
-def test_parse_options_empty():
-    """Test parsing an empty options string."""
-    helper = TexHelper(fake_pytex())
-    width, height, kwargs = helper._parse_pyfig_options("")
-    # Default is linewidth x linewidth
-    assert width == 2
-    assert height == 2
-    assert kwargs == {}
-
-
 @pytest.mark.parametrize(
     "width,expected",
     (
@@ -64,25 +54,43 @@ def test_parse_options_empty():
     ),
 )
 def test_parse_width(width, expected):
-    """Test parsing width option."""
+    """Test parsing width option with all the supported units."""
     helper = TexHelper(fake_pytex())
     width, _, _ = helper._parse_pyfig_options(f"width={width}")
     assert width == expected
 
 
 @pytest.mark.parametrize(
-    "options,expected", (("1,aspect=1.5", 1.5), ("1,golden", 1.618))
+    "options,expected_width,expected_height",
+    (
+        (
+            # Default is linewidth x linewidth
+            ("", 2, 2),
+            # One argument is width
+            ("1pt", 1, 1),
+            # Two arguments is width and height
+            ("5pt,3pt", 5, 3),
+            # Aspect ratio can be used with width or on its own, but does nothing with
+            # height
+            # TODO: make using height and aspect together an error
+            ("aspect=2", 2, 1),
+            ("golden", 2, 2 / 1.618),
+            ("1,aspect=2", 1, 0.5),
+            ("1,1 , aspect = 2 ", 1, 1),
+        )
+    ),
 )
-def test_parse_aspect(options, expected):
-    """Test parsing aspect ratio option."""
+def test_parse_options(options, expected_width, expected_height):
+    """Test parsing options in general."""
     helper = TexHelper(fake_pytex())
-    width, height, _ = helper._parse_pyfig_options(options)
-    assert width == 1
-    assert height == pytest.approx(width / expected, abs=0.001)
+    width, height, kwargs = helper._parse_pyfig_options(options)
+    assert width == pytest.approx(expected_width, abs=0.001)
+    assert height == pytest.approx(expected_height, abs=0.001)
+    assert kwargs == {}
 
 
-def test_parse_unexpected():
-    """Test parsing a mixture of unknown positional and keyword arguments"""
+def test_parse_arguments():
+    """Test parsing a figure script arguments."""
     args, kwargs = evaluate_arg_str("1, unknown1='a'")
     assert args == (1,)
     assert kwargs == dict(unknown1="a")

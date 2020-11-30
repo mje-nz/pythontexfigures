@@ -218,6 +218,7 @@ class TexHelper:
         # First take key=value args
         for arg in keyval_args:
             key, val = arg.split("=")
+            key = key.strip()
             if key not in ("width", "height", "aspect"):
                 raise ValueError(f"Unknown key {key} ({args_str})")
             params[key] = val
