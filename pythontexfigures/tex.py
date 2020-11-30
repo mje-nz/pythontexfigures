@@ -18,7 +18,6 @@ Any files written in `main` should either be opened using `pytex.open` or passed
 should go in `FIGURES_DIR`, (so that latexmk removes them on clean).
 """
 import math
-import re
 import string
 import textwrap
 from functools import partial
@@ -50,15 +49,6 @@ def _calculate_figure_name(script: StrPath, args: Iterable, kwargs: dict):
     if parts:
         name += "-" + "-".join(parts)
     return name
-
-
-def _replace_units(args: str):
-    r"""Evaluate constants in the arguments to a \pyfig command."""
-    re_pattern = r"(\d+)\s?{}(\s|,|$)"
-    units = (("pt", 1), ("in", 72.27), ("cm", 72.27 / 2.54), ("mm", 72.27 / 25.4))
-    for unit, size_in_pt in units:
-        args = re.sub(re_pattern.format(unit), rf"\1*{size_in_pt}\2", args)
-    return args
 
 
 def evaluate_arg_str(args: str):
@@ -192,26 +182,67 @@ class TexHelper:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
         return globals_["main"]
 
+    def _evaluate_units(self, arg):
+        """Evaluate units in a height or width specification."""
+        arg = arg.strip()
+        if arg.endswith("{}"):
+            # Sometimes you need to use \textwidth{} instead of \textwidth to get the
+            # syntax to work in the document, and then it comes through as the command
+            # followed by a space then the braces.
+            # TODO: is this still true with xparse?
+            arg = arg[:-2].strip()
+        units = (
+            ("pt", 1),
+            ("in", 72.27),
+            ("cm", 72.27 / 2.54),
+            ("mm", 72.27 / 25.4),
+            (r"\textwidth", self.text_width),
+            (r"\linewidth", self.line_width),
+        )
+        for unit, size_in_pt in units:
+            if arg.endswith(unit):
+                return float(arg[: -len(unit)]) * size_in_pt
+        return float(arg)
+
     def _parse_pyfig_options(self, args_str: str):
         r"""Parse the options for a \pyfig command.
 
         Returns:
-            args, kwargs
+            width, height, dict of any other arguments
         """
-        args = re.sub(r"golden(,|$)", f"aspect={GOLDEN_RATIO}", args_str)
-        # Sometimes you need to use \textwidth{} instead of \textwidth to get the syntax
-        # to work in the document, and then it comes through as the command followed by
-        # a space then the braces.
-        # TODO: is this still true with xparse?
-        args = re.sub(r"(\d)\\textwidth(\s*{})?", rf"\1*{self.text_width}", args)
-        args = re.sub(r"(\d)\\linewidth(\s*{})?", rf"\1*{self.line_width}", args)
-        args = args.replace(r"\{", "{").replace(r"\}", "}")
-        args = _replace_units(args)
-        try:
-            return evaluate_arg_str(args)
-        except ValueError as e:
-            # Add original argument string to message
-            raise ValueError(str(e) + f" ({args_str})")
+        params = {}  # type: Dict[str, Any]
+        args = [arg for arg in args_str.split(",") if arg]
+        keyval_args = [arg for arg in args if "=" in arg]
+        val_args = [arg for arg in args if "=" not in arg]
+
+        # First take key=value args
+        for arg in keyval_args:
+            key, val = arg.split("=")
+            if key not in ("width", "height", "aspect"):
+                raise ValueError(f"Unknown key {key} ({args_str})")
+            params[key] = val
+
+        # Special-case "golden"
+        if "golden" in val_args:
+            params["aspect"] = GOLDEN_RATIO
+            val_args.remove("golden")
+
+        # Then fill in missing params from value-only args
+        for key in ("width", "height"):
+            if key not in params and val_args:
+                params[key] = val_args.pop(0)
+        if val_args:
+            raise ValueError(f"Left-over arguments {val_args} ({args_str})")
+
+        # Evaluate units in width and height (technically also in aspect, don't care)
+        for key in params:
+            params[key] = self._evaluate_units(str(params[key]))
+
+        # Calculate width and height
+        width = params.pop("width", self.line_width)
+        aspect = params.pop("aspect", 1)
+        height = params.pop("height", width / aspect)
+        return width, height, params
 
     def figure(self, script_name: str, figure_options: str, script_args: str):
         r"""Perform a \pyfig command."""
@@ -226,8 +257,8 @@ class TexHelper:
         if not script_name.endswith(".py"):
             script_name += ".py"
 
-        args, kwargs = self._parse_pyfig_options(figure_options)
-        context = FigureContext(self, script_name, *args, **kwargs)
+        width, height, kwargs = self._parse_pyfig_options(figure_options)
+        context = FigureContext(self, script_name, width, height, **kwargs)
 
         args, kwargs = evaluate_arg_str(script_args)
         return context.draw_and_include(*args, **kwargs)
@@ -245,9 +276,8 @@ class FigureContext:
 
     helper: Optional[TexHelper]
     script_name: str
-    width: Optional[float] = None
-    height: Optional[float] = None
-    aspect: Optional[float] = None
+    width: float
+    height: float
 
     # These are for run_standalone
     # TODO: support pdf figures through pyfig
@@ -274,7 +304,6 @@ class FigureContext:
             _calculate_figure_name(self.script_name, args, kwargs),
             width=self.width,
             height=self.height,
-            aspect=self.aspect,
             output_dir=self.output_dir,
         )
 
@@ -304,7 +333,7 @@ def run_standalone(main: Callable):
     helper = None
     name = main.__globals__["__file__"]  # type: ignore
     ctx = FigureContext(
-        helper, name, width=4, format_="pdf", verbose=True, figure_func=main
+        helper, name, 4, 4, format_="pdf", verbose=True, figure_func=main
     )
     # TODO: Specify output path
     figure_filename = ctx.draw()

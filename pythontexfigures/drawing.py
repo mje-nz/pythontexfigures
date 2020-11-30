@@ -108,8 +108,7 @@ def draw_figure(
     figure_func: Callable,
     name: str,
     width: float,
-    height: float = None,
-    aspect: float = None,
+    height: float,
     output_dir: Optional[StrPath] = None,
     format_: str = "pgf",
     verbose: bool = False,
@@ -134,10 +133,6 @@ def draw_figure(
         The saved figure's full path.
     """
     # TODO: tests for figure size
-    if aspect is None:
-        aspect = 1
-    if height is None:
-        height = width / aspect
     figure_size = (width, height)
     plt.figure(figsize=figure_size)
 

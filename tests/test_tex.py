@@ -41,8 +41,10 @@ def test_construct():
 def test_parse_options_empty():
     """Test parsing an empty options string."""
     helper = TexHelper(fake_pytex())
-    args, kwargs = helper._parse_pyfig_options("")
-    assert args == ()
+    width, height, kwargs = helper._parse_pyfig_options("")
+    # Default is linewidth x linewidth
+    assert width == 2
+    assert height == 2
     assert kwargs == {}
 
 
@@ -64,16 +66,19 @@ def test_parse_options_empty():
 def test_parse_width(width, expected):
     """Test parsing width option."""
     helper = TexHelper(fake_pytex())
-    _, kwargs = helper._parse_pyfig_options(f"width={width}")
-    assert kwargs == dict(width=expected)
+    width, _, _ = helper._parse_pyfig_options(f"width={width}")
+    assert width == expected
 
 
-@pytest.mark.parametrize("options,expected", (("aspect=1.5", 1.5), ("golden", 1.618)))
+@pytest.mark.parametrize(
+    "options,expected", (("1,aspect=1.5", 1.5), ("1,golden", 1.618))
+)
 def test_parse_aspect(options, expected):
     """Test parsing aspect ratio option."""
     helper = TexHelper(fake_pytex())
-    _, kwargs = helper._parse_pyfig_options(options)
-    assert kwargs == pytest.approx(dict(aspect=expected), abs=0.001)
+    width, height, _ = helper._parse_pyfig_options(options)
+    assert width == 1
+    assert height == pytest.approx(width / expected, abs=0.001)
 
 
 def test_parse_unexpected():
@@ -146,6 +151,6 @@ def draw_with_context(ctx, arg):
 
 def test_context():
     """Test passing context object to figure functions."""
-    ctx = FigureContext(None, "test", width=1, figure_func=draw_with_context)
+    ctx = FigureContext(None, "test", 1, 1, figure_func=draw_with_context)
     with pytest.raises(DrawCalled):
         ctx.draw(1)
