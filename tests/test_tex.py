@@ -6,7 +6,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from pythontexfigures.tex import TexHelper, _calculate_figure_name, evaluate_arg_str
+from pythontexfigures.tex import (
+    FigureContext,
+    TexHelper,
+    _calculate_figure_name,
+    evaluate_arg_str,
+    with_context,
+)
 
 
 def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
@@ -121,3 +127,25 @@ def test_draw(in_temp_dir, options, args):
     Path("test.py").write_text(SCRIPT)
     helper = TexHelper(fake_pytex())
     helper.figure(".test.py.", f".{options}.", f".{args}.")
+
+
+class DrawCalled(Exception):
+    """Dummy exception for interrupting drawing."""
+
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+
+@with_context
+def draw_with_context(ctx, arg):
+    """Dummy figure function which expects a context."""
+    assert ctx is not None
+    assert arg is not None
+    raise DrawCalled()
+
+
+def test_context():
+    """Test passing context object to figure functions."""
+    ctx = FigureContext(None, "test", width=1, figure_func=draw_with_context)
+    with pytest.raises(DrawCalled):
+        ctx.draw(1)

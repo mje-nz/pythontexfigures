@@ -21,6 +21,7 @@ import math
 import re
 import string
 import textwrap
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Optional
 
@@ -232,6 +233,12 @@ class TexHelper:
         return context.draw_and_include(*args, **kwargs)
 
 
+def with_context(f):
+    """Decorator for figure functions which enables passing the figure context."""
+    f.use_context = True
+    return f
+
+
 @attrs(auto_attribs=True)
 class FigureContext:
     """Drawing context for an individual figure."""
@@ -255,6 +262,8 @@ class FigureContext:
             self.width = self.helper.line_width
         if self.figure_func is None:
             self.figure_func = self.helper._load_script(self.script_name)
+        if hasattr(self.figure_func, "use_context") and self.figure_func.use_context:
+            self.figure_func = partial(self.figure_func, self)
         if self.output_dir is None and self.helper is not None:
             self.output_dir = self.helper.output_dir
 
