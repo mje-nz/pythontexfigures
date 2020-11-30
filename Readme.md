@@ -89,9 +89,6 @@ Wishlist:
 * TODO: convince `latexmk` that `pdflatex` should always run before `pythontex` if
   both need to run
 * Sensible way of doing relative imports from inside figure scripts
-* Make unitless widths default to a proportion of \linewidth
-* Shorter way of setting figure width, e.g. `[0.7]` is `width=0.7\linewidth` and absolute widths require a unit
-* Shorter way of setting figure size, e.g. `4x4pt`
 * TODO: do failed scripts ever get re-run?
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.

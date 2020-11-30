@@ -202,7 +202,7 @@ class TexHelper:
         for unit, size_in_pt in units:
             if arg.endswith(unit):
                 return float(arg[: -len(unit)]) * size_in_pt
-        return float(arg)
+        return float(arg) * self.line_width
 
     def _parse_pyfig_options(self, args_str: str):
         r"""Parse the options for a \pyfig command.
@@ -235,13 +235,14 @@ class TexHelper:
         if val_args:
             raise ValueError(f"Left-over arguments {val_args} ({args_str})")
 
-        # Evaluate units in width and height (technically also in aspect, don't care)
-        for key in params:
-            params[key] = self._evaluate_units(str(params[key]))
+        # Evaluate units in width and height
+        for key in ("width", "height"):
+            if key in params:
+                params[key] = self._evaluate_units(params[key])
 
         # Calculate width and height
         width = params.pop("width", self.line_width)
-        aspect = params.pop("aspect", 1)
+        aspect = float(params.pop("aspect", 1))
         height = params.pop("height", width / aspect)
         return width, height, params
 

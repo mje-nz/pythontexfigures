@@ -15,7 +15,7 @@ from pythontexfigures.tex import (
 )
 
 
-def fake_pytex(fontsize="10", textwidth="5", linewidth="2", **context):
+def fake_pytex(fontsize="10", textwidth="200", linewidth="100", **context):
     """Construct a mock PythonTeXUtils object with the given attribute in context."""
     pytex = Mock()
     pytex.context = SimpleNamespace(
@@ -41,16 +41,16 @@ def test_construct():
 @pytest.mark.parametrize(
     "width,expected",
     (
-        ("1", 1),
+        ("1", 100),  # linewidth
         ("1pt", 1),
         ("1in", 72.27),
         ("1cm", 72.27 / 2.54),
         ("1mm", 72.27 / 25.4),
-        (r"0.5\textwidth", 2.5),
-        (r"0.5\textwidth{}", 2.5),
-        (r"0.5\textwidth {}", 2.5),
-        (r"0.75\linewidth", 1.5),
-        (r"0.75\linewidth{}", 1.5),
+        (r"0.5\textwidth", 100),
+        (r"0.5\textwidth{}", 100),
+        (r"0.5\textwidth {}", 100),
+        (r"0.75\linewidth", 75),
+        (r"0.75\linewidth{}", 75),
     ),
 )
 def test_parse_width(width, expected):
@@ -65,7 +65,7 @@ def test_parse_width(width, expected):
     (
         (
             # Default is linewidth x linewidth
-            ("", 2, 2),
+            ("", 100, 100),
             # One argument is width
             ("1pt", 1, 1),
             # Two arguments is width and height
@@ -73,10 +73,10 @@ def test_parse_width(width, expected):
             # Aspect ratio can be used with width or on its own, but does nothing with
             # height
             # TODO: make using height and aspect together an error
-            ("aspect=2", 2, 1),
-            ("golden", 2, 2 / 1.618),
-            ("1,aspect=2", 1, 0.5),
-            ("1,1 , aspect = 2 ", 1, 1),
+            ("aspect=2", 100, 50),
+            ("golden", 100, 100 / 1.61803),
+            ("1pt,aspect=2", 1, 0.5),
+            (" 1pt,1pt , aspect = 2 ", 1, 1),
         )
     ),
 )
