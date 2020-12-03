@@ -6,7 +6,7 @@ import _pytest.reports  # noqa: I900
 import pytest
 
 # Add helpers folder to path
-sys.path.append(str(Path(__file__) / "helpers"))
+sys.path.append(str(Path(__file__).parent / "helpers"))
 
 
 @pytest.fixture
