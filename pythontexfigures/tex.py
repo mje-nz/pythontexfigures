@@ -307,6 +307,7 @@ class FigureContext:
             width=self.width,
             height=self.height,
             output_dir=self.output_dir,
+            format_=self.format_,
         )
 
         if self.helper:
