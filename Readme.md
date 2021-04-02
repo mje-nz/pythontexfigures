@@ -85,7 +85,7 @@ Wishlist:
 * One session per figure
 * Coverage
 * Sort out and test non-clean builds
-* TODO: Why are the left and bottom axis border thicker?
+* TODO: Why are the left and/or bottom axis borders thicker sometimes?
 * TODO: convince `latexmk` that `pdflatex` should always run before `pythontex` if
   both need to run
 * Sensible way of doing relative imports from inside figure scripts
