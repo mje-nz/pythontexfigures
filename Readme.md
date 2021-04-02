@@ -90,6 +90,7 @@ Wishlist:
   both need to run
 * Sensible way of doing relative imports from inside figure scripts
 * TODO: do failed scripts ever get re-run?
+* TODO: Figure out why pythontex has stopped running at all in latexmk
 
 Tested with PythonTeX 0.16, and latexmk 4.63b.
 Note that PythonTeX 0.16 is quite outdated; a patch is included for one issue which is fixed upstream but not yet released.
