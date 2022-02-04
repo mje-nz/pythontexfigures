@@ -133,7 +133,8 @@ def draw_figure(
         The saved figure's full path.
     """
     # TODO: tests for figure size
-    figure_size = (width, height)
+    # Shrink slightly to allow for 2pt padding
+    figure_size = (width - 4 / 72, height - 4 / 72)
     plt.figure(figsize=figure_size)
 
     # Run figure function, then reset mpl.rcParams
@@ -155,7 +156,7 @@ def draw_figure(
     assert Path(output_dir).is_dir(), "Output dir does not exist"
     figure_filename = Path(output_dir) / (name + "." + format_)
     # TODO: Check if already created this run
-    plt.savefig(figure_filename, bbox_inches="tight", pad_inches=0)
+    plt.savefig(figure_filename, bbox_inches="tight", pad_inches=2 / 72)
     plt.close("all")
 
     if format_ == "pgf":
