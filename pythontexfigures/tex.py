@@ -183,6 +183,7 @@ class TexHelper:
         globals_: Dict[str, Any] = dict(
             __file__=str(script_path), __name__=script_path.stem
         )
+        exec(f"import sys; sys.path.append('{str(script_path.parent)}')", globals_)
         # https://stackoverflow.com/a/41658338
         with self.pytex.open(script_path, "rb") as file:
             exec(compile(file.read(), filename=script_path, mode="exec"), globals_)
